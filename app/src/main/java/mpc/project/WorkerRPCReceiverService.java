@@ -9,26 +9,15 @@ import mpc.project.util.RpcUtility;
 import java.math.BigInteger;
 
 public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImplBase {
-    private WorkerMain worker;
+    final private WorkerMain worker;
     private int id;
 
     public WorkerRPCReceiverService(WorkerMain worker) {
         this.worker = worker;
     }
 
-    /* Variables for distributed RSA keypair generation */
-    private BigInteger randomPrime;
-    //    private BigInteger p;
-//    private BigInteger q;
-    private BigInteger[] pArr;          // An array holding p_i ( i \in [1, clusterNum])
-    private BigInteger[] qArr;          // An array holding q_i ( i \in [1, clusterNum])
-    private BigInteger[] hArr;          // An array holding h_i ( i \in [1, clusterNum])
-    private BigInteger[] nPieceArr;
-
     @Override
     public void formCluster(StdRequest request, StreamObserver<StdResponse> responseObserver) {
-//            id = request.getId();
-//            randomPrime = new BigInteger(request.getContents().toByteArray());
         StdResponse res = RpcUtility.Response.newStdResponse(id);
         responseObserver.onNext(res);
         responseObserver.onCompleted();
@@ -60,8 +49,6 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
         String managerUri = new String(request.getContents().toByteArray());
         Channel channel = ManagedChannelBuilder.forTarget(managerUri).usePlaintext().build();
         worker.getRpcSender().setManagerStub(ManagerServiceGrpc.newBlockingStub(channel));
-//        StdRequest greetingReq = RpcUtility.Request.newStdRequest(id);
-//        managerStub.greeting(greetingReq);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
         responseObserver.onCompleted();
         System.out.println("registered manager at " + managerUri);

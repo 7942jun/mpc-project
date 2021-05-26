@@ -38,7 +38,6 @@ public class WorkerMain {
 
     private final Random rnd;
 
-    private WorkerServiceGrpc.WorkerServiceStub[] stubs;
     private int clusterSize;
 
     public void setClusterSize(int clusterSize) {
@@ -49,8 +48,6 @@ public class WorkerMain {
     public int getClusterSize() {
         return clusterSize;
     }
-
-    private ManagerServiceGrpc.ManagerServiceBlockingStub managerStub;
 
     /* Variables for distributed RSA keypair generation */
     private BigInteger p;

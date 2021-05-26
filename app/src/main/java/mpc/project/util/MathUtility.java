@@ -34,7 +34,7 @@ public class MathUtility {
     }
 
     static public BigInteger genRandPrimeBig(int bitNum, BigInteger lessThanThis, Random rnd) {
-        BigInteger result = BigInteger.valueOf(0);
+        BigInteger result;
         do {
             result = BigInteger.probablePrime(bitNum, rnd);
         } while (result.compareTo(lessThanThis) >= 0);
