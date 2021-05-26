@@ -193,7 +193,7 @@ public class WorkerMain {
         BigInteger[] verificationArray = new BigInteger[this.clusterSize];
 
         primalityTestWaiting = true;
-        for (int i = 0; i < clusterSize; i++) {
+        for (int i = 1; i <= clusterSize; i++) {
             rpcSender.sendPrimalityTestRequest(i, g, verificationArray);
         }
         dataReceiver.waitVerificationFactors();
@@ -225,13 +225,13 @@ public class WorkerMain {
                 key.getN().subtract(p).subtract(q).add(BigInteger.ONE) :
                 BigInteger.ZERO.subtract(p).subtract((q));
         BigInteger[] gammaArrLocal = MathUtility.generateRandomSumArray(phi, clusterSize, rnd);
-        for (int i = 0; i < clusterSize; i++) {
-            rpcSender.sendGamma(i + 1, gammaArrLocal[i]);
+        for (int i = 1; i <= clusterSize; i++) {
+            rpcSender.sendGamma(i, gammaArrLocal[i]);
         }
         dataReceiver.waitGamma();
         BigInteger gammaSum = MathUtility.arraySum(gammaArr);
-        for (int i = 0; i < clusterSize; i++) {
-            rpcSender.sendGammaSum(i + 1, gammaSum);
+        for (int i = 1; i <= clusterSize; i++) {
+            rpcSender.sendGammaSum(i, gammaSum);
         }
         dataReceiver.waitGammaSum();
         BigInteger l = MathUtility.arraySum(gammaSumArr).mod(key.getE());
@@ -270,7 +270,7 @@ public class WorkerMain {
 
     private String[] trialDecryption(String encryptedMessage) {
         String[] result = new String[clusterSize];
-        for (int i = 1; i < clusterSize; i++) {
+        for (int i = 1; i <= clusterSize; i++) {
             rpcSender.sendDecryptRequest(i, encryptedMessage, result);
         }
         System.out.println("Waiting for trial decryption to complete");

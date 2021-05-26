@@ -22,16 +22,16 @@ public class WorkerRPCSender {
         this.stubs = stubs;
     }
 
-    public void sendPQH(int i, BigInteger p, BigInteger q, BigInteger h) {
+    public void sendPQH(int id, BigInteger p, BigInteger q, BigInteger h) {
         ExchangePrimespqhRequest request = RpcUtility.Request.newExchangePrimesRequest(worker.getId(), p, q, h);
-        stubs[i - 1].exchangePrimesPQH(request, new StreamObserver<>() {
+        stubs[id - 1].exchangePrimesPQH(request, new StreamObserver<>() {
             @Override
             public void onNext(StdResponse response) {
             }
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("exchangePQH RPC error for " + i + " : " + t.getMessage());
+                System.out.println("exchangePQH RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
@@ -42,16 +42,16 @@ public class WorkerRPCSender {
         });
     }
 
-    public void sendNPiece(int i, BigInteger nPiece) {
+    public void sendNPiece(int id, BigInteger nPiece) {
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), nPiece);
-        stubs[i - 1].exchangeNPiece(request, new StreamObserver<StdResponse>() {
+        stubs[id - 1].exchangeNPiece(request, new StreamObserver<StdResponse>() {
             @Override
             public void onNext(StdResponse response) {
             }
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("sendNPiece RPC error for " + i + " : " + t.getMessage());
+                System.out.println("sendNPiece RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
@@ -62,9 +62,9 @@ public class WorkerRPCSender {
         });
     }
 
-    public void sendPrimalityTestRequest(int i, BigInteger g, BigInteger[] resultBucket) {
+    public void sendPrimalityTestRequest(int id, BigInteger g, BigInteger[] resultBucket) {
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), g);
-        stubs[i].primalityTest(request, new StreamObserver<PrimalityTestResponse>() {
+        stubs[id-1].primalityTest(request, new StreamObserver<PrimalityTestResponse>() {
             @Override
             public void onNext(PrimalityTestResponse value) {
                 int id = value.getId();
@@ -84,9 +84,9 @@ public class WorkerRPCSender {
         });
     }
 
-    public void sendGamma(int i, BigInteger gamma) {
+    public void sendGamma(int id, BigInteger gamma) {
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), gamma);
-        stubs[i - 1].exchangeGamma(request, new StreamObserver<StdResponse>() {
+        stubs[id - 1].exchangeGamma(request, new StreamObserver<StdResponse>() {
             @Override
             public void onNext(StdResponse response) {
 //                System.out.println("received by " + response.getId());
@@ -94,7 +94,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("sendGamma RPC error for " + i + " : " + t.getMessage());
+                System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
@@ -104,9 +104,9 @@ public class WorkerRPCSender {
         });
     }
 
-    public void sendGammaSum(int i, BigInteger gammaSum) {
+    public void sendGammaSum(int id, BigInteger gammaSum) {
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), gammaSum);
-        stubs[i - 1].exchangeGammaSum(request, new StreamObserver<StdResponse>() {
+        stubs[id - 1].exchangeGammaSum(request, new StreamObserver<StdResponse>() {
             @Override
             public void onNext(StdResponse response) {
 //                System.out.println("received by " + response.getId());
@@ -114,7 +114,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("sendGamma RPC error for " + i + " : " + t.getMessage());
+                System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
@@ -124,8 +124,8 @@ public class WorkerRPCSender {
         });
     }
 
-    public void sendDecryptRequest(int i, String encryptedMessage, String[] resultBucket){
-        stubs[i].decrypt(RpcUtility.Request.newStdRequest(worker.getId(), encryptedMessage),
+    public void sendDecryptRequest(int id, String encryptedMessage, String[] resultBucket){
+        stubs[id-1].decrypt(RpcUtility.Request.newStdRequest(worker.getId(), encryptedMessage),
                 new StreamObserver<StdResponse>() {
                     @Override
                     public void onNext(StdResponse response) {

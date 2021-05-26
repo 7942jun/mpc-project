@@ -30,28 +30,28 @@ public class WorkerDataReceiver {
 
     public final Object exchangeGammaLock = new Object();
 //    private Lock gammaReadyFlag = new ReentrantLock();
-    private Semaphore gammaReadyFlag = new Semaphore(1);
+    private final Semaphore gammaReadyFlag = new Semaphore(1);
     private int exchangeGammaCounter = 0;
 
     public final Object exchangeGammaSumLock = new Object();
-    private Semaphore gammaSumReadyFlag = new Semaphore(1);
+    private final Semaphore gammaSumReadyFlag = new Semaphore(1);
     private int exchangeGammaSumCounter = 0;
 
 
     public final Object exchangePrimesLock = new Object();
-    private Semaphore primesReadyFlag = new Semaphore(1);
+    private final Semaphore primesReadyFlag = new Semaphore(1);
     private int exchangePrimesCounter = 0;
 
     public final Object exchangeNPiecesLock = new Object();
-    private Semaphore nPiecesReadyFlag = new Semaphore(1);
+    private final Semaphore nPiecesReadyFlag = new Semaphore(1);
     private int exchangeNPiecesCounter = 0;
 
     private final Object shadowReceivingLock = new Object();
-    private Semaphore shadowsReadyFlag = new Semaphore(1);
+    private final Semaphore shadowsReadyFlag = new Semaphore(1);
     private int shadowReceivingCounter = 0;
 
     private final Object verificationFactorsLock = new Object();
-    private Semaphore verificationFactorsReadyFlag = new Semaphore(1);
+    private final Semaphore verificationFactorsReadyFlag = new Semaphore(1);
     private int verificationFactorsCounter = 0;
 
     public void receivePHQ(int id, BigInteger p, BigInteger q, BigInteger h){
@@ -143,6 +143,7 @@ public class WorkerDataReceiver {
             shadowReceivingCounter++;
             if (shadowReceivingCounter == worker.getClusterSize()) {
                 shadowsReadyFlag.release();
+                shadowReceivingCounter = 0;
             }
         }
     }
@@ -162,6 +163,7 @@ public class WorkerDataReceiver {
             verificationFactorsCounter++;
             if (verificationFactorsCounter == worker.getClusterSize()) {
                 verificationFactorsReadyFlag.release();
+                verificationFactorsCounter = 0;
             }
         }
     }
