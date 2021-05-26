@@ -7,7 +7,8 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class WorkerDataReceiver {
     WorkerMain worker;
-    public WorkerDataReceiver(WorkerMain worker){
+
+    public WorkerDataReceiver(WorkerMain worker) {
         this.worker = worker;
         try {
             this.primesReadyFlag.acquire();
@@ -20,6 +21,7 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
     }
+
     public BigInteger[] pArr;          // An array holding p_i ( i \in [1, clusterNum])
     public BigInteger[] qArr;          // An array holding q_i ( i \in [1, clusterNum])
     public BigInteger[] hArr;          // An array holding h_i ( i \in [1, clusterNum])
@@ -29,7 +31,7 @@ public class WorkerDataReceiver {
     public BigInteger[] gammaSumArr;
 
     public final Object exchangeGammaLock = new Object();
-//    private Lock gammaReadyFlag = new ReentrantLock();
+    //    private Lock gammaReadyFlag = new ReentrantLock();
     private final Semaphore gammaReadyFlag = new Semaphore(1);
     private int exchangeGammaCounter = 0;
 
@@ -54,7 +56,7 @@ public class WorkerDataReceiver {
     private final Semaphore verificationFactorsReadyFlag = new Semaphore(1);
     private int verificationFactorsCounter = 0;
 
-    public void receivePHQ(int id, BigInteger p, BigInteger q, BigInteger h){
+    public void receivePHQ(int id, BigInteger p, BigInteger q, BigInteger h) {
         int i = id - 1;
         pArr[i] = p;
         qArr[i] = q;
@@ -68,7 +70,7 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void waitPHQ(){
+    public void waitPHQ() {
         try {
             primesReadyFlag.acquire();
         } catch (InterruptedException e) {
@@ -76,19 +78,19 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void receiveNPiece(int id, BigInteger nPiece){
+    public void receiveNPiece(int id, BigInteger nPiece) {
         int i = id - 1;
         nPieceArr[i] = nPiece;
-        synchronized (exchangeNPiecesLock){
+        synchronized (exchangeNPiecesLock) {
             exchangeNPiecesCounter++;
-            if(exchangeNPiecesCounter == worker.getClusterSize()){
+            if (exchangeNPiecesCounter == worker.getClusterSize()) {
                 nPiecesReadyFlag.release();
                 exchangeNPiecesCounter = 0;
             }
         }
     }
 
-    public void waitNPieces(){
+    public void waitNPieces() {
         try {
             nPiecesReadyFlag.acquire();
         } catch (InterruptedException e) {
@@ -96,19 +98,19 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void receiveGamma(int id, BigInteger gamma){
+    public void receiveGamma(int id, BigInteger gamma) {
         int i = id - 1;
         gammaArr[i] = gamma;
-        synchronized (exchangeGammaLock){
+        synchronized (exchangeGammaLock) {
             exchangeGammaCounter++;
-            if(exchangeGammaCounter == worker.getClusterSize()){
+            if (exchangeGammaCounter == worker.getClusterSize()) {
                 gammaReadyFlag.release();
                 exchangeGammaCounter = 0;
             }
         }
     }
 
-    public void waitGamma(){
+    public void waitGamma() {
         try {
             gammaReadyFlag.acquire();
         } catch (InterruptedException e) {
@@ -116,19 +118,19 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void receiveGammaSum(int id, BigInteger gammaSum){
+    public void receiveGammaSum(int id, BigInteger gammaSum) {
         int i = id - 1;
         gammaSumArr[i] = gammaSum;
-        synchronized (exchangeGammaSumLock){
+        synchronized (exchangeGammaSumLock) {
             exchangeGammaSumCounter++;
-            if(exchangeGammaSumCounter == worker.getClusterSize()){
+            if (exchangeGammaSumCounter == worker.getClusterSize()) {
                 gammaSumReadyFlag.release();
                 exchangeGammaSumCounter = 0;
             }
         }
     }
 
-    public void waitGammaSum(){
+    public void waitGammaSum() {
         try {
             gammaSumReadyFlag.acquire();
         } catch (InterruptedException e) {
@@ -136,7 +138,7 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void receiveShadow(int id, String factor, String[] resultBucket){
+    public void receiveShadow(int id, String factor, String[] resultBucket) {
         int j = id - 1;
         resultBucket[j] = factor;
         synchronized (shadowReceivingLock) {
@@ -148,7 +150,7 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void waitShadows(){
+    public void waitShadows() {
         try {
             shadowsReadyFlag.acquire();
         } catch (InterruptedException e) {
@@ -156,7 +158,7 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void receiveVerificationFactor(int id, BigInteger factor, BigInteger[] resultBucket){
+    public void receiveVerificationFactor(int id, BigInteger factor, BigInteger[] resultBucket) {
         int j = id - 1;
         resultBucket[j] = factor;
         synchronized (verificationFactorsLock) {
@@ -168,7 +170,7 @@ public class WorkerDataReceiver {
         }
     }
 
-    public void waitVerificationFactors(){
+    public void waitVerificationFactors() {
         try {
             verificationFactorsReadyFlag.acquire();
         } catch (InterruptedException e) {

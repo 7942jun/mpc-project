@@ -353,7 +353,7 @@ public class ManagerMain {
             System.out.println("Decrypted string: " + decryptedString);
             System.out.println(
                     "Decryption " +
-                    (decryptedString.equals(s) ? "successes!" : "fails!"));
+                            (decryptedString.equals(s) ? "successes!" : "fails!"));
         }
         System.exit(0);
     }

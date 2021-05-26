@@ -14,9 +14,11 @@ import mpc.project.util.RSA;
 public class WorkerMain {
     private Server server;
     private WorkerRPCSender rpcSender;
-    public WorkerRPCSender getRpcSender(){
+
+    public WorkerRPCSender getRpcSender() {
         return rpcSender;
     }
+
     private WorkerDataReceiver dataReceiver;
 
     public WorkerDataReceiver getDataReceiver() {
@@ -44,7 +46,7 @@ public class WorkerMain {
         dataBucketInit();
     }
 
-    public int getClusterSize(){
+    public int getClusterSize() {
         return clusterSize;
     }
 
@@ -64,7 +66,8 @@ public class WorkerMain {
      *    private key: <d, N>
      */
     private Key key = new Key();
-    public Key getKey(){
+
+    public Key getKey() {
         return key;
     }
 
@@ -109,8 +112,9 @@ public class WorkerMain {
     }
 
     private final Object modulusGenerationLock = new Object();
+
     public void generateModulusPiece(int bitNum, BigInteger randomPrime) {
-        synchronized (modulusGenerationLock){
+        synchronized (modulusGenerationLock) {
             p = BigInteger.probablePrime(bitNum, rnd);
             q = BigInteger.probablePrime(bitNum, rnd);
             generateFGH(randomPrime);
@@ -226,7 +230,7 @@ public class WorkerMain {
                 BigInteger.ZERO.subtract(p).subtract((q));
         BigInteger[] gammaArrLocal = MathUtility.generateRandomSumArray(phi, clusterSize, rnd);
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendGamma(i, gammaArrLocal[i]);
+            rpcSender.sendGamma(i, gammaArrLocal[i - 1]);
         }
         dataReceiver.waitGamma();
         BigInteger gammaSum = MathUtility.arraySum(gammaArr);
