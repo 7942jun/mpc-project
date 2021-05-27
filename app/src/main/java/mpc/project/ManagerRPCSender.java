@@ -105,4 +105,25 @@ public class ManagerRPCSender {
             }
         });
     }
+
+    public void sendDecryptionRequest(int id, String encryptedMessage, String[] resultBucket) {
+        stubs[id - 1].decrypt(RpcUtility.Request.newStdRequest(id, encryptedMessage),
+                new StreamObserver<StdResponse>() {
+                    @Override
+                    public void onNext(StdResponse response) {
+                        int id = response.getId();
+                        String shadow = new String(response.getContents().toByteArray());
+                        manager.getDataReceiver().receiveDecryptionResult(id, shadow, resultBucket);
+                    }
+
+                    @Override
+                    public void onError(Throwable t) {
+                        System.out.println("decryption error: " + t.getMessage());
+                    }
+
+                    @Override
+                    public void onCompleted() {
+                    }
+                });
+    }
 }

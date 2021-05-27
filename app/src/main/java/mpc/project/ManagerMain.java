@@ -118,10 +118,6 @@ public class ManagerMain {
         }
     }
 
-    final Object generateModulusLock = new Object();
-    int generateModulusCounter = 0;
-    boolean generateModulusWaiting = false;
-
     private void generateModulus() {
         for (int id = 1; id <= clusterSize; id++) {
             rpcSender.sendModulusGenerationRequest(id, keyBitLength, randomPrime);
@@ -141,49 +137,13 @@ public class ManagerMain {
         dataReceiver.waitPrivateKeyGeneration();
     }
 
-    final Object decryptionLock = new Object();
-    boolean decryptionWaiting = false;
-    int decryptionCounter = 0;
-
     public String[] decrypt(String s) {
-        String[] result = new String[clusterSize];
-        synchronized (decryptionLock) {
-            decryptionWaiting = true;
-            decryptionCounter = 0;
-            for (int i = 0; i < stubs.size(); i++) {
-                stubs.get(i).decrypt(RpcUtility.Request.newStdRequest(id, s),
-                        new StreamObserver<StdResponse>() {
-                            @Override
-                            public void onNext(StdResponse response) {
-                                int j = response.getId() - 1;
-                                result[j] = new String(response.getContents().toByteArray());
-                            }
-
-                            @Override
-                            public void onError(Throwable t) {
-                                System.out.println("decryption error: " + t.getMessage());
-                            }
-
-                            @Override
-                            public void onCompleted() {
-                                synchronized (decryptionLock) {
-                                    decryptionCounter++;
-                                    if (decryptionCounter == clusterSize) {
-                                        decryptionLock.notify();
-                                    }
-                                }
-                            }
-                        });
-            }
-            try {
-                decryptionLock.wait();
-            } catch (InterruptedException e) {
-                System.out.println("Waiting interrupted: " + e.getMessage());
-                System.exit(-4);
-            }
-            decryptionWaiting = false;
+        String[] decryptionShadows = new String[clusterSize];
+        for (int id = 1; id <= clusterSize; id++) {
+            rpcSender.sendDecryptionRequest(id, s, decryptionShadows);
         }
-        return result;
+        dataReceiver.waitDecryptionShadow();
+        return decryptionShadows;
     }
 
     public void run() {

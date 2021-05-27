@@ -12,6 +12,7 @@ public class ManagerDataReceiver {
             modulusGenerationFlag.acquire();
             primalityTestCompleteFlag.acquire();
             privateKeyGenerationFlag.acquire();
+            shadowCollectedFlag.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -100,5 +101,26 @@ public class ManagerDataReceiver {
         }
     }
 
+    final private Object decryptionLock = new Object();
+    final private Semaphore shadowCollectedFlag = new Semaphore(1);
+    volatile private int decryptionCounter = 0;
 
+    public void receiveDecryptionResult(int id, String shadow, String[] resultBucket) {
+        resultBucket[id - 1] = shadow;
+        synchronized (decryptionLock) {
+            decryptionCounter++;
+            if (decryptionCounter == manager.getClusterSize()) {
+                decryptionCounter = 0;
+                shadowCollectedFlag.release();
+            }
+        }
+    }
+
+    public void waitDecryptionShadow() {
+        try {
+            shadowCollectedFlag.acquire();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 }
