@@ -167,6 +167,7 @@ public class WorkerMain {
         BigInteger[] qArr = new BigInteger[clusterSize];
         BigInteger[] hArr = new BigInteger[clusterSize];
         dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
+        // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
         BigInteger nPiece = (MathUtility.arraySum(pArr).mod(randomPrime)
                 .multiply(MathUtility.arraySum(qArr).mod(randomPrime))).mod(randomPrime)
                 .add(MathUtility.arraySum(hArr).mod(randomPrime))
