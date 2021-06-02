@@ -12,22 +12,27 @@ public class MathUtility {
         return result;
     }
 
+    static public double computeTermOfLagrangianPolynomialAtZero(int xi, int len) {
+        int i = xi - 1;
+        int numerator = 1;
+        int denominator = 1;
+        for (int j = 0; j < i; j++) {
+            numerator *= -(j + 1);
+            denominator *= (xi - (j + 1));
+        }
+        for (int j = i + 1; j < len; j++) {
+            numerator *= -(j + 1);
+            denominator *= (xi - (j + 1));
+        }
+        return (double) numerator / (double) denominator;
+    }
+
     static public double[] computeAllValuesOfLagrangianPolynomialAtZero(int len) {
         double[] results = new double[len];
 
         for (int i = 0; i < len; i++) {
             int xi = i + 1;
-            int numerator = 1;
-            int denominator = 1;
-            for (int j = 0; j < i; j++) {
-                numerator *= -(j + 1);
-                denominator *= (xi - (j + 1));
-            }
-            for (int j = i + 1; j < len; j++) {
-                numerator *= -(j + 1);
-                denominator *= (xi - (j + 1));
-            }
-            results[i] = (double) numerator / (double) denominator;
+            results[i] = computeTermOfLagrangianPolynomialAtZero(xi, len);
         }
 
         return results;
