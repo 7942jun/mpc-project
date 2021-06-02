@@ -169,10 +169,7 @@ public class WorkerMain {
         dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
         // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
         // Todo: extract this into MathUtility to reuse in distributed sieving
-        BigInteger nPiece = (MathUtility.arraySum(pArr).mod(randomPrime)
-                .multiply(MathUtility.arraySum(qArr).mod(randomPrime))).mod(randomPrime)
-                .add(MathUtility.arraySum(hArr).mod(randomPrime))
-                .mod(randomPrime);
+        BigInteger nPiece = MathUtility.computeSharingResult(pArr, qArr, hArr, randomPrime);
         for (int i = 1; i <= clusterSize; i++) {
             rpcSender.sendNPiece(i, nPiece, workflowID);
         }

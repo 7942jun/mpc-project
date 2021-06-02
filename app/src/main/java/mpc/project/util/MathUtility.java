@@ -32,7 +32,7 @@ public class MathUtility {
 
         for (int i = 0; i < len; i++) {
             int xi = i + 1;
-            results[i] = computeTermOfLagrangianPolynomialAtZero(xi, len);
+            results[i] = MathUtility.computeTermOfLagrangianPolynomialAtZero(xi, len);
         }
 
         return results;
@@ -109,5 +109,12 @@ public class MathUtility {
             result[i] = BigInteger.valueOf(array[i]);
         }
         return result;
+    }
+
+    static public BigInteger computeSharingResult(BigInteger[] pArr, BigInteger[] qArr, BigInteger[] hArr, BigInteger modulo) {
+        return (MathUtility.arraySum(pArr).mod(modulo)
+                .multiply(MathUtility.arraySum(qArr).mod(modulo))).mod(modulo)
+                .add(MathUtility.arraySum(hArr).mod(modulo))
+                .mod(modulo);
     }
 }
