@@ -115,6 +115,7 @@ public class ManagerMain {
     public ManagerMain(int portNum) {
         this.portNum = portNum;
         this.rnd = new Random();
+        // Fixme: hard codding 3 * keyBitLength might be a bad idea for large bit length, maybe need to look into this
         this.randomPrime = BigInteger.probablePrime(3 * keyBitLength, rnd);
         try {
             this.server = ServerBuilder.forPort(portNum)
