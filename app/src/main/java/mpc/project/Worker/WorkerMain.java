@@ -181,7 +181,7 @@ public class WorkerMain {
     private BigInteger generateN(BigInteger randomPrime, long workflowID) {
         BigInteger[] nPieceArr = new BigInteger[clusterSize];
         dataReceiver.waitNPieces(workflowID, nPieceArr);
-        double[] values = MathUtility.computeValuesOfLagrangianPolynomialsAtZero(clusterSize);
+        double[] values = MathUtility.computeAllValuesOfLagrangianPolynomialAtZero(clusterSize);
         BigDecimal N = new BigDecimal(0);
         for (int i = 0; i < nPieceArr.length; i++) {
             BigDecimal Ni = new BigDecimal(nPieceArr[i]);

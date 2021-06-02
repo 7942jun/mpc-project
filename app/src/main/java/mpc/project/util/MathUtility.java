@@ -12,7 +12,7 @@ public class MathUtility {
         return result;
     }
 
-    static public double[] computeValuesOfLagrangianPolynomialsAtZero(int len) {
+    static public double[] computeAllValuesOfLagrangianPolynomialAtZero(int len) {
         double[] results = new double[len];
 
         for (int i = 0; i < len; i++) {
