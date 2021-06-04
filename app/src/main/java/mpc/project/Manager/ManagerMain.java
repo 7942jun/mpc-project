@@ -122,6 +122,16 @@ public class ManagerMain {
             System.out.println(e.getMessage());
             System.exit(-2);
         }
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                System.out.println("Shutting down RPC server");
+                if (server != null) {
+                    rpcSender.broadcastShutDownWorkerRequest("Manager exits");
+                    server.shutdownNow();
+                }
+            }
+        });
     }
 
     long workflowNum = 0;
