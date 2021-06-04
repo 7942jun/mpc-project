@@ -67,7 +67,6 @@ public class WorkerDataReceiver {
         emptyCheckModulus(workflowID);
         if (modulusCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
             modulusMap.put(workflowID, modulus);
-            modulusCounterMap.get(workflowID).set(0);
             modulusReadyFlagMap.get(workflowID).release();
         }
     }
@@ -120,7 +119,6 @@ public class WorkerDataReceiver {
         hArrMap.get(workflowID)[id - 1] = h;
         if (exchangePrimesCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
             primesReadyFlagMap.get(workflowID).release();
-            exchangePrimesCounterMap.get(workflowID).set(0);
         }
     }
 
@@ -164,7 +162,6 @@ public class WorkerDataReceiver {
         emptyCheckNPiece(workflowID);
         nPieceArrMap.get(workflowID)[id - 1] = nPiece;
         if (nPieceCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
-            nPieceCounterMap.get(workflowID).set(0);
             nPieceReadyFlagMap.get(workflowID).release();
         }
     }
@@ -228,7 +225,6 @@ public class WorkerDataReceiver {
         emptyCheckGamma(workflowID);
         gammaArrMap.get(workflowID)[id - 1] = gamma;
         if (gammaCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
-            gammaCounterMap.get(workflowID).set(0);
             gammaReadyFlagMap.get(workflowID).release();
         }
     }
@@ -291,7 +287,6 @@ public class WorkerDataReceiver {
         emptyCheckGammaSum(workflowID);
         gammaSumArrMap.get(workflowID)[id - 1] = gammaSum;
         if (gammaSumCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
-            gammaSumCounterMap.get(workflowID).set(0);
             gammaSumReadyFlagMap.get(workflowID).release();
         }
     }
@@ -354,7 +349,6 @@ public class WorkerDataReceiver {
         emptyCheckShadow(workflowID);
         shadowArrMap.get(workflowID)[id - 1] = shadow;
         if (shadowCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
-            shadowCounterMap.get(workflowID).set(0);
             shadowReadyFlagMap.get(workflowID).release();
         }
     }
@@ -417,7 +411,6 @@ public class WorkerDataReceiver {
         emptyCheckVerificationFactor(workflowID);
         verificationFactorArrMap.get(workflowID)[id - 1] = verificationFactor;
         if (verificationFactorCounterMap.get(workflowID).incrementAndGet() == worker.getClusterSize()) {
-            verificationFactorCounterMap.get(workflowID).set(0);
             verificationFactorReadyFlagMap.get(workflowID).release();
         }
     }
