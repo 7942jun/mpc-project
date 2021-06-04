@@ -48,11 +48,11 @@ public class ManagerRPCSender {
         });
     }
 
-    public void sendPrimalityTestRequest(int id) {
-        StdRequest request = RpcUtility.Request.newStdRequest(0);
-        stubs[id - 1].primalityTest(request, new StreamObserver<PrimalityTestResponse>() {
+    public void sendHostPrimalityTestRequest(int id, long workflowID) {
+        StdRequest request = RpcUtility.Request.newStdRequest(0, workflowID);
+        stubs[id - 1].hostPrimalityTest(request, new StreamObserver<StdResponse>() {
             @Override
-            public void onNext(PrimalityTestResponse response) {
+            public void onNext(StdResponse response) {
                 boolean primalityTestResult = (response.getId() == 1);
                 manager.getDataReceiver().receivePrimalityTestResult(primalityTestResult);
                 System.out.println("received by " + response.getId());

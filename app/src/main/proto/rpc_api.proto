@@ -19,6 +19,7 @@ service WorkerService {
   rpc exchangeNPiece(StdRequest) returns (StdResponse) {}
 
   /* Primality test utilities */
+  rpc hostPrimalityTest(StdRequest) returns (StdResponse) {}
   rpc primalityTest(StdRequest) returns (PrimalityTestResponse) {}
 
   /* Private key generation utilities */

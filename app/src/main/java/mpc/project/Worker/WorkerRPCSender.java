@@ -27,7 +27,7 @@ public class WorkerRPCSender {
 
     public void broadcastModulusGenerationRequest(int bitLength, BigInteger randomPrime, long workflowID) {
         for (int id = 1; id <= worker.getClusterSize(); id++) {
-            StdRequest request = RpcUtility.Request.newStdRequest(bitLength, randomPrime);
+            StdRequest request = RpcUtility.Request.newStdRequest(bitLength, randomPrime, workflowID);
             stubs[id - 1].generateModulusPiece(request, new StreamObserver<StdResponse>() {
                 @Override
                 public void onNext(StdResponse response) {
@@ -69,7 +69,6 @@ public class WorkerRPCSender {
 //                System.out.println("sent!");
             }
         }));
-
     }
 
     public void sendNPiece(int id, BigInteger nPiece, long workflowID) {
@@ -90,30 +89,6 @@ public class WorkerRPCSender {
             @Override
             public void onCompleted() {
 //                System.out.println("sent!");
-            }
-        }));
-    }
-
-    public void sendPrimalityTestRequest(int id, BigInteger g, BigInteger[] resultBucket) {
-        StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), g);
-        Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].primalityTest(request, new StreamObserver<>() {
-            @Override
-            public void onNext(PrimalityTestResponse value) {
-                int id = value.getId();
-                BigInteger v = new BigInteger(value.getV().toByteArray());
-                worker.getDataReceiver().receiveVerificationFactor(id, v, resultBucket);
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                t.printStackTrace();
-                System.out.println("primalityTest to Guests RPC Error: " + t.getMessage());
-                System.exit(-1);
-            }
-
-            @Override
-            public void onCompleted() {
             }
         }));
     }

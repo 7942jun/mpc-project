@@ -107,21 +107,20 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
     }
 
     @Override
+    public void hostPrimalityTest(StdRequest request, StreamObserver<StdResponse> responseObserver){
+        long workflowID = request.getWorkflowID();
+        boolean passPrimalityTest = worker.primalityTestHost(workflowID);
+        int resultCode = passPrimalityTest? 1 : 0;
+        responseObserver.onNext(RpcUtility.Response.newStdResponse(resultCode));
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void primalityTest(StdRequest request, StreamObserver<PrimalityTestResponse> responseObserver) {
-//            System.out.println("receive primalityTest RPC");
-        if (id == 1 && !worker.primalityTestWaiting) {
-            boolean passPrimalityTest = worker.primalityTestHost();
-            PrimalityTestResponse response;
-            if (passPrimalityTest) {
-                response = RpcUtility.Response.newPrimalityTestResponse(1);
-            } else {
-                response = RpcUtility.Response.newPrimalityTestResponse(0);
-            }
-            responseObserver.onNext(response);
-        } else {
-            BigInteger result = worker.primalityTestGuest(new BigInteger(request.getContents().toByteArray()));
-            responseObserver.onNext(RpcUtility.Response.newPrimalityTestResponse(id, result));
-        }
+        BigInteger g = new BigInteger(request.getContents().toByteArray());
+        long workflowID = request.getWorkflowID();
+        BigInteger result = worker.primalityTestGuest(g, workflowID);
+        responseObserver.onNext(RpcUtility.Response.newPrimalityTestResponse(id, result));
         responseObserver.onCompleted();
     }
 
@@ -147,7 +146,8 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
 
     @Override
     public void generatePrivateKey(StdRequest request, StreamObserver<StdResponse> responseObserver) {
-        worker.generatePrivateKey();
+        long workflowID = request.getWorkflowID();
+        worker.generatePrivateKey(workflowID);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
         responseObserver.onCompleted();
     }

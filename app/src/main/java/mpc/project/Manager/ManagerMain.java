@@ -134,17 +134,25 @@ public class ManagerMain {
         });
     }
 
-    long workflowNum = 0;
+    private volatile long workflowCounter = 0;
 
-    private void generateModulus() {
-        long workflowID = workflowNum++;
-        rpcSender.sendHostModulusGenerationRequest(1, keyBitLength, randomPrime, workflowID);
-        dataReceiver.waitModulusGeneration(workflowID);
-    }
+    private long validModulusGeneration(){
+        int workerLeaderID = 1;
+        boolean isValidModulus;
+        long workflowID;
+        do{
+            workflowID = workflowCounter++;
 
-    private boolean primalityTest() {
-        rpcSender.sendPrimalityTestRequest(1);
-        return dataReceiver.waitPrimalityTestResult();
+            // generate a possible modulus
+            rpcSender.sendHostModulusGenerationRequest(workerLeaderID, keyBitLength, randomPrime, workflowID);
+            dataReceiver.waitModulusGeneration(workflowID);
+
+            // perform primality test
+            rpcSender.sendHostPrimalityTestRequest(workerLeaderID, workflowID);
+            isValidModulus = dataReceiver.waitPrimalityTestResult();
+
+        }while (!isValidModulus);
+        return workflowID;
     }
 
     private void generatePrivateKey() {
@@ -166,10 +174,8 @@ public class ManagerMain {
     public void run() {
         formCluster();
         formNetwork();
-        do {
-            generateModulus();
-        } while (!primalityTest());
-        generatePrivateKey();
+        long workflowID = validModulusGeneration();
+        //generatePrivateKey();
         Scanner scanner = new Scanner(System.in);
         while (!scanner.nextLine().equals("quit")) {
             String s = scanner.nextLine();

@@ -1,14 +1,18 @@
 package mpc.project.Worker;
 
+import com.google.common.math.PairedStats;
 import io.grpc.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import mpc.project.util.Key;
 import mpc.project.util.MathUtility;
+import mpc.project.util.Pair;
 import mpc.project.util.RSA;
 
 public class WorkerMain {
@@ -50,8 +54,10 @@ public class WorkerMain {
     }
 
     /* Variables for distributed RSA keypair generation */
-    private BigInteger p;
-    private BigInteger q;
+//    private BigInteger p;
+//    private BigInteger q;
+    private final Map<Long, BigInteger> modulusMap = new ConcurrentHashMap<>();
+    private final Map<Long, Pair<BigInteger, BigInteger>> pqMap = new ConcurrentHashMap<>();
 
     /* Rsa Key
      *    Stores exponent e, modulus N and private d
@@ -93,19 +99,22 @@ public class WorkerMain {
         rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
         System.out.println("host waiting for modulus generation");
         BigInteger result = dataReceiver.waitModulus(workflowID);
-        System.out.println("modulus generation result collected");
+        System.out.println("modulus is " + modulusMap.get(workflowID));
         return result;
     }
 
     public BigInteger generateModulus(int bitNum, BigInteger randomPrime, long workflowID) {
-        p = BigInteger.probablePrime(bitNum, rnd);
-        q = BigInteger.probablePrime(bitNum, rnd);
-        generateFGH(randomPrime, workflowID);
+        BigInteger p = BigInteger.probablePrime(bitNum, rnd);
+        BigInteger q = BigInteger.probablePrime(bitNum, rnd);
+        generateFGH(p, q, randomPrime, workflowID);
         generateNPiece(randomPrime, workflowID);
-        return generateN(randomPrime, workflowID);
+        BigInteger modulus = generateN(randomPrime, workflowID);
+        modulusMap.put(workflowID, modulus);
+        pqMap.put(workflowID, new Pair<>(p, q));
+        return modulus;
     }
 
-    private void generateFGH(BigInteger randomPrime, long workflowID) {
+    private void generateFGH(BigInteger p, BigInteger q, BigInteger randomPrime, long workflowID) {
         int l = (clusterSize - 1) / 2;
 
         BigInteger[] polyF = MathUtility.genRandBigPolynomial(l, randomPrime, rnd);
@@ -166,42 +175,51 @@ public class WorkerMain {
         return key.getN();
     }
 
-    public boolean primalityTestWaiting = false;
+    public boolean primalityTestHost(long workflowID) {
+        if(!modulusMap.containsKey(workflowID)){
+            System.out.println("workflowID not found! id: " + workflowID);
+            return false;
+        }
+        BigInteger modulus = modulusMap.get(workflowID);
+        BigInteger g = MathUtility.genRandBig(modulus, rnd);
 
-    public boolean primalityTestHost() {
-        BigInteger g = MathUtility.genRandBig(key.getN(), rnd);
 
         BigInteger[] verificationArray = new BigInteger[this.clusterSize];
 
-        primalityTestWaiting = true;
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendPrimalityTestRequest(i, g, verificationArray);
+            rpcSender.sendPrimalityTestRequest(i, g, workflowID);
         }
-        dataReceiver.waitVerificationFactors();
-        primalityTestWaiting = false;
+        dataReceiver.waitVerificationFactor(workflowID, verificationArray);
 
         BigInteger v = BigInteger.valueOf(1);
         for (int i = 1; i < clusterSize; i++) {
             v = v.multiply(verificationArray[i]);
         }
 
-        return verificationArray[0].equals(v.mod(key.getN()));
+        return verificationArray[0].equals(v.mod(modulus));
     }
 
-    public BigInteger primalityTestGuest(BigInteger g) {
+    public BigInteger primalityTestGuest(BigInteger g, long workflowID) {
         // Todo: change server 1 every time to do load balancing
+        Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
+        BigInteger p = pair.first;
+        BigInteger q = pair.second;
+        BigInteger modulus = modulusMap.get(workflowID);
         if (id == 1) {
-            BigInteger exponent = key.getN().subtract(p).subtract(q).add(BigInteger.valueOf(1));
-            return g.modPow(exponent, key.getN());
+            BigInteger exponent = modulus.subtract(p).subtract(q).add(BigInteger.valueOf(1));
+            return g.modPow(exponent, modulus);
         }
-        return g.modPow(p.add(q), key.getN());
+        return g.modPow(p.add(q), modulus);
     }
 
     BigInteger[] gammaArr;
     BigInteger[] gammaSumArr;
 
-    public void generatePrivateKey() {
+    public void generatePrivateKey(long workflowID) {
         // Todo: change server 1 every time to do load balancing
+        Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
+        BigInteger p = pair.first;
+        BigInteger q = pair.second;
         BigInteger phi = (id == 1) ?
                 key.getN().subtract(p).subtract(q).add(BigInteger.ONE) :
                 BigInteger.ZERO.subtract(p).subtract((q));
