@@ -124,11 +124,12 @@ public class ManagerMain {
         }
     }
 
+    long workflowNum = 0;
+
     private void generateModulus() {
-        for (int id = 1; id <= clusterSize; id++) {
-            rpcSender.sendModulusGenerationRequest(id, keyBitLength, randomPrime);
-        }
-        dataReceiver.waitModulusGeneration();
+        long workflowID = workflowNum++;
+        rpcSender.sendHostModulusGenerationRequest(1, keyBitLength, randomPrime, workflowID);
+        dataReceiver.waitModulusGeneration(workflowID);
     }
 
     private boolean primalityTest() {

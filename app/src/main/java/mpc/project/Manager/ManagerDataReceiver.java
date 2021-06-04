@@ -1,5 +1,7 @@
 package mpc.project.Manager;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 
 public class ManagerDataReceiver {
@@ -9,7 +11,6 @@ public class ManagerDataReceiver {
         this.manager = manager;
         try {
             networkFormedFlag.acquire();
-            modulusGenerationFlag.acquire();
             primalityTestCompleteFlag.acquire();
             privateKeyGenerationFlag.acquire();
             shadowCollectedFlag.acquire();
@@ -40,23 +41,23 @@ public class ManagerDataReceiver {
         }
     }
 
-    final Object modulusGenerationLock = new Object();
-    final private Semaphore modulusGenerationFlag = new Semaphore(1);
-    volatile private int modulusGenerationCounter = 0;
+    private Map<Long, Semaphore> modulusGenerationFlagMap = new ConcurrentHashMap<>();
 
-    public void receiveModulusGenerationResponse() {
-        synchronized (modulusGenerationLock) {
-            modulusGenerationCounter++;
-            if (modulusGenerationCounter == manager.getClusterSize()) {
-                modulusGenerationCounter = 0;
-                modulusGenerationFlag.release();
-            }
+    synchronized private void checkEmptyModulusGeneration(long workflowID){
+        if(!modulusGenerationFlagMap.containsKey(workflowID)){
+            modulusGenerationFlagMap.put(workflowID, new Semaphore(0));
         }
     }
 
-    public void waitModulusGeneration() {
+    public void receiveModulusGenerationResponse(long workflowID) {
+        checkEmptyModulusGeneration(workflowID);
+        modulusGenerationFlagMap.get(workflowID).release();
+    }
+
+    public void waitModulusGeneration(long workflowID) {
+        checkEmptyModulusGeneration(workflowID);
         try {
-            modulusGenerationFlag.acquire();
+            modulusGenerationFlagMap.get(workflowID).acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

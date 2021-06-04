@@ -91,12 +91,12 @@ public class ManagerRPCSender {
         });
     }
 
-    public void sendModulusGenerationRequest(int id, int keyBitLength, BigInteger randomPrime) {
-        StdRequest request = RpcUtility.Request.newStdRequest(keyBitLength, randomPrime);
-        stubs[id - 1].generateModulusPiece(request, new StreamObserver<StdResponse>() {
+    public void sendHostModulusGenerationRequest(int id, int keyBitLength, BigInteger randomPrime, long workflowID) {
+        StdRequest request = RpcUtility.Request.newStdRequest(keyBitLength, randomPrime, workflowID);
+        stubs[id - 1].hostModulusGeneration(request, new StreamObserver<StdResponse>() {
             @Override
             public void onNext(StdResponse response) {
-                manager.getDataReceiver().receiveModulusGenerationResponse();
+                manager.getDataReceiver().receiveModulusGenerationResponse(workflowID);
             }
 
             @Override

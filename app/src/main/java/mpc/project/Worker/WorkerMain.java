@@ -42,7 +42,7 @@ public class WorkerMain {
 
     public void setClusterSize(int clusterSize) {
         this.clusterSize = clusterSize;
-        dataBucketInit();
+//        dataBucketInit();
     }
 
     public int getClusterSize() {
@@ -93,35 +93,23 @@ public class WorkerMain {
         }
     }
 
-    private void dataBucketInit() {
-        pArr = new BigInteger[clusterSize];
-        qArr = new BigInteger[clusterSize];
-        hArr = new BigInteger[clusterSize];
-        nPieceArr = new BigInteger[clusterSize];
-        gammaArr = new BigInteger[clusterSize];
-        gammaSumArr = new BigInteger[clusterSize];
-
-        dataReceiver.pArr = this.pArr;
-        dataReceiver.qArr = this.qArr;
-        dataReceiver.hArr = this.hArr;
-        dataReceiver.nPieceArr = this.nPieceArr;
-        dataReceiver.gammaArr = this.gammaArr;
-        dataReceiver.gammaSumArr = this.gammaSumArr;
+    public BigInteger hostModulusGeneration(int bitNum, BigInteger randomPrime, long workflowID){
+        rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
+        System.out.println("host waiting for modulus generation");
+        BigInteger result = dataReceiver.waitModulus(workflowID);
+        System.out.println("modulus generation result collected");
+        return result;
     }
 
-    private final Object modulusGenerationLock = new Object();
-
-    public void generateModulusPiece(int bitNum, BigInteger randomPrime) {
-        synchronized (modulusGenerationLock) {
-            p = BigInteger.probablePrime(bitNum, rnd);
-            q = BigInteger.probablePrime(bitNum, rnd);
-            generateFGH(randomPrime);
-            generateNPiece(randomPrime);
-            generateN(randomPrime);
-        }
+    public BigInteger generateModulus(int bitNum, BigInteger randomPrime, long workflowID) {
+        p = BigInteger.probablePrime(bitNum, rnd);
+        q = BigInteger.probablePrime(bitNum, rnd);
+        generateFGH(randomPrime, workflowID);
+        generateNPiece(randomPrime, workflowID);
+        return generateN(randomPrime, workflowID);
     }
 
-    private void generateFGH(BigInteger randomPrime) {
+    private void generateFGH(BigInteger randomPrime, long workflowID) {
         int l = (clusterSize - 1) / 2;
 
         BigInteger[] polyF = MathUtility.genRandBigPolynomial(l, randomPrime, rnd);
@@ -149,24 +137,27 @@ public class WorkerMain {
         }
 
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendPQH(i, pArr_tmp[i - 1], qArr_tmp[i - 1], hArr_tmp[i - 1]);
+            rpcSender.sendPQH(i, pArr_tmp[i - 1], qArr_tmp[i - 1], hArr_tmp[i - 1], workflowID);
         }
     }
 
-    private void generateNPiece(BigInteger randomPrime) {
-        dataReceiver.waitPHQ();
-        // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
+    private void generateNPiece(BigInteger randomPrime, long workflowID) {
+        BigInteger[] pArr = new BigInteger[clusterSize];
+        BigInteger[] qArr = new BigInteger[clusterSize];
+        BigInteger[] hArr = new BigInteger[clusterSize];
+        dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
         BigInteger nPiece = (MathUtility.arraySum(pArr).mod(randomPrime)
                 .multiply(MathUtility.arraySum(qArr).mod(randomPrime))).mod(randomPrime)
                 .add(MathUtility.arraySum(hArr).mod(randomPrime))
                 .mod(randomPrime);
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendNPiece(i, nPiece);
+            rpcSender.sendNPiece(i, nPiece, workflowID);
         }
     }
 
-    private void generateN(BigInteger randomPrime) {
-        dataReceiver.waitNPieces();
+    private BigInteger generateN(BigInteger randomPrime, long workflowID) {
+        BigInteger[] nPieceArr = new BigInteger[clusterSize];
+        dataReceiver.waitNPieces(workflowID, nPieceArr);
         double[] values = MathUtility.computeValuesOfLagrangianPolynomialsAtZero(clusterSize);
         BigDecimal N = new BigDecimal(0);
         for (int i = 0; i < nPieceArr.length; i++) {
@@ -175,7 +166,8 @@ public class WorkerMain {
         }
         key.setN(N.toBigInteger().mod(randomPrime));
         RSA.init(key.getN());
-        System.out.println("The modulus is: " + key.getN());
+        System.out.println("The modulus is :" + key.getN());
+        return key.getN();
     }
 
     public boolean primalityTestWaiting = false;
