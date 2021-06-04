@@ -199,13 +199,12 @@ public class WorkerMain {
         return verificationArray[0].equals(v.mod(modulus));
     }
 
-    public BigInteger primalityTestGuest(BigInteger g, long workflowID) {
-        // Todo: change server 1 every time to do load balancing
+    public BigInteger primalityTestGuest(int hostID, BigInteger g, long workflowID) {
         Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
         BigInteger p = pair.first;
         BigInteger q = pair.second;
         BigInteger modulus = modulusMap.get(workflowID);
-        if (id == 1) {
+        if (id == hostID) {
             BigInteger exponent = modulus.subtract(p).subtract(q).add(BigInteger.valueOf(1));
             return g.modPow(exponent, modulus);
         }

@@ -364,26 +364,6 @@ public class WorkerDataReceiver {
         cleanShadowBucket(workflowID);
     }
 
-    public void receiveVerificationFactor(int id, BigInteger factor, BigInteger[] resultBucket) {
-        int j = id - 1;
-        resultBucket[j] = factor;
-        synchronized (verificationFactorsLock) {
-            verificationFactorsCounter++;
-            if (verificationFactorsCounter == worker.getClusterSize()) {
-                verificationFactorsReadyFlag.release();
-                verificationFactorsCounter = 0;
-            }
-        }
-    }
-
-    public void waitVerificationFactors() {
-        try {
-            verificationFactorsReadyFlag.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     private final Object verificationFactorLock = new Object();
     private final Map<Long, Semaphore> verificationFactorReadyFlagMap = new ConcurrentHashMap<>();
     private final Map<Long, AtomicInteger> verificationFactorCounterMap = new ConcurrentHashMap<>();

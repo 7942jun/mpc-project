@@ -151,6 +151,12 @@ public class ManagerMain {
             rpcSender.sendHostPrimalityTestRequest(workerLeaderID, workflowID);
             isValidModulus = dataReceiver.waitPrimalityTestResult();
 
+            // change host
+            workerLeaderID ++;
+            if(workerLeaderID > clusterSize){
+                workerLeaderID = 1;
+            }
+
         }while (!isValidModulus);
         return workflowID;
     }

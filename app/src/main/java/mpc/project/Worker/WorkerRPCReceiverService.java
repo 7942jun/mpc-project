@@ -117,9 +117,10 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
 
     @Override
     public void primalityTest(StdRequest request, StreamObserver<PrimalityTestResponse> responseObserver) {
+        int hostID = request.getId();
         BigInteger g = new BigInteger(request.getContents().toByteArray());
         long workflowID = request.getWorkflowID();
-        BigInteger result = worker.primalityTestGuest(g, workflowID);
+        BigInteger result = worker.primalityTestGuest(hostID, g, workflowID);
         responseObserver.onNext(RpcUtility.Response.newPrimalityTestResponse(id, result));
         responseObserver.onCompleted();
     }
