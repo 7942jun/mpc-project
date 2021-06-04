@@ -42,15 +42,25 @@ public class WorkerDataReceiver {
     private final Semaphore verificationFactorsReadyFlag = new Semaphore(1);
     private int verificationFactorsCounter = 0;
 
+    private final Object modulusMapLock = new Object();
     private Map<Long, Semaphore> modulusReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> modulusCounterMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger> modulusMap = new ConcurrentHashMap<>();
-    // Todo: Implement elegant GC mechanics
 
-    synchronized private void emptyCheckModulus(long workflowID){
-        if(!modulusReadyFlagMap.containsKey(workflowID)){
-            modulusReadyFlagMap.put(workflowID, new Semaphore(0));
-            modulusCounterMap.put(workflowID, new AtomicInteger(0));
+    private void emptyCheckModulus(long workflowID){
+        synchronized (modulusMapLock){
+            if(!modulusReadyFlagMap.containsKey(workflowID)){
+                modulusReadyFlagMap.put(workflowID, new Semaphore(0));
+                modulusCounterMap.put(workflowID, new AtomicInteger(0));
+            }
+        }
+    }
+
+    private void cleanModulusBucket(long workflowID){
+        synchronized (modulusMapLock){
+            modulusReadyFlagMap.remove(workflowID);
+            modulusCounterMap.remove(workflowID);
+            modulusMap.remove(workflowID);
         }
     }
 
@@ -70,22 +80,37 @@ public class WorkerDataReceiver {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return modulusMap.get(workflowID);
+        BigInteger result = modulusMap.get(workflowID);
+        cleanModulusBucket(workflowID);
+        return result;
     }
 
+    private final Object primesLock = new Object();
     private Map<Long, Semaphore> primesReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> exchangePrimesCounterMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> pArrMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> qArrMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> hArrMap = new ConcurrentHashMap<>();
 
-    synchronized private void emptyCheckPrimes(long workflowID){
-        if(!primesReadyFlagMap.containsKey(workflowID)){
-            primesReadyFlagMap.put(workflowID, new Semaphore(0));
-            exchangePrimesCounterMap.put(workflowID, new AtomicInteger(0));
-            pArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
-            qArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
-            hArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+    private void emptyCheckPrimes(long workflowID){
+        synchronized (primesLock){
+            if(!primesReadyFlagMap.containsKey(workflowID)){
+                primesReadyFlagMap.put(workflowID, new Semaphore(0));
+                exchangePrimesCounterMap.put(workflowID, new AtomicInteger(0));
+                pArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+                qArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+                hArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+            }
+        }
+    }
+
+    private void cleanPrimesBucket(long workflowID){
+        synchronized (primesLock){
+            primesReadyFlagMap.remove(workflowID);
+            exchangePrimesCounterMap.remove(workflowID);
+            pArrMap.remove(workflowID);
+            qArrMap.remove(workflowID);
+            hArrMap.remove(workflowID);
         }
     }
 
@@ -110,17 +135,29 @@ public class WorkerDataReceiver {
         Arrays.setAll(pArr, i -> pArrMap.get(workflowID)[i]);
         Arrays.setAll(qArr, i -> qArrMap.get(workflowID)[i]);
         Arrays.setAll(hArr, i -> hArrMap.get(workflowID)[i]);
+        cleanPrimesBucket(workflowID);
     }
 
+    private final Object nPieceLock = new Object();
     private Map<Long, Semaphore> nPieceReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> nPieceCounterMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> nPieceArrMap = new ConcurrentHashMap<>();
 
-    synchronized private void emptyCheckNPiece(long workflowID){
-        if(!nPieceReadyFlagMap.containsKey(workflowID)){
-            nPieceReadyFlagMap.put(workflowID, new Semaphore(0));
-            nPieceCounterMap.put(workflowID, new AtomicInteger(0));
-            nPieceArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+    private void emptyCheckNPiece(long workflowID){
+        synchronized (nPieceLock){
+            if(!nPieceReadyFlagMap.containsKey(workflowID)){
+                nPieceReadyFlagMap.put(workflowID, new Semaphore(0));
+                nPieceCounterMap.put(workflowID, new AtomicInteger(0));
+                nPieceArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+            }
+        }
+    }
+
+    private void cleanNPieceBucket(long workflowID){
+        synchronized (nPieceLock){
+            nPieceReadyFlagMap.remove(workflowID);
+            nPieceCounterMap.remove(workflowID);
+            nPieceArrMap.remove(workflowID);
         }
     }
 
@@ -141,6 +178,7 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         Arrays.setAll(nPieceArr, i -> nPieceArrMap.get(workflowID)[i]);
+        cleanNPieceBucket(workflowID);;
     }
 
 
@@ -164,15 +202,26 @@ public class WorkerDataReceiver {
         }
     }
 
+    private final Object gammaLock = new Object();
     private Map<Long, Semaphore> gammaReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> gammaCounterMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> gammaArrMap = new ConcurrentHashMap<>();
 
-    synchronized private void emptyCheckGamma(long workflowID){
-        if(!gammaReadyFlagMap.containsKey(workflowID)){
-            gammaReadyFlagMap.put(workflowID, new Semaphore(0));
-            gammaCounterMap.put(workflowID, new AtomicInteger(0));
-            gammaArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+    private void emptyCheckGamma(long workflowID){
+        synchronized (gammaLock){
+            if(!gammaReadyFlagMap.containsKey(workflowID)){
+                gammaReadyFlagMap.put(workflowID, new Semaphore(0));
+                gammaCounterMap.put(workflowID, new AtomicInteger(0));
+                gammaArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+            }
+        }
+    }
+
+    private void cleanGammaBucket(long workflowID){
+        synchronized (gammaLock){
+            gammaReadyFlagMap.remove(workflowID);
+            gammaCounterMap.remove(workflowID);
+            gammaArrMap.remove(workflowID);
         }
     }
 
@@ -193,6 +242,7 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         Arrays.setAll(gammaArr, i -> gammaArrMap.get(workflowID)[i]);
+        cleanGammaBucket(workflowID);
     }
 
     public void receiveGammaSum(int id, BigInteger gammaSum) {
@@ -215,15 +265,26 @@ public class WorkerDataReceiver {
         }
     }
 
+    private final Object gammaSumLock = new Object();
     private Map<Long, Semaphore> gammaSumReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> gammaSumCounterMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> gammaSumArrMap = new ConcurrentHashMap<>();
 
-    synchronized private void emptyCheckGammaSum(long workflowID){
-        if(!gammaSumReadyFlagMap.containsKey(workflowID)){
-            gammaSumReadyFlagMap.put(workflowID, new Semaphore(0));
-            gammaSumCounterMap.put(workflowID, new AtomicInteger(0));
-            gammaSumArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+    private void emptyCheckGammaSum(long workflowID){
+        synchronized (gammaSumLock){
+            if(!gammaSumReadyFlagMap.containsKey(workflowID)){
+                gammaSumReadyFlagMap.put(workflowID, new Semaphore(0));
+                gammaSumCounterMap.put(workflowID, new AtomicInteger(0));
+                gammaSumArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+            }
+        }
+    }
+
+    private void cleanGammaSumBucket(long workflowID){
+        synchronized (gammaSumLock){
+            gammaSumReadyFlagMap.remove(workflowID);
+            gammaSumCounterMap.remove(workflowID);
+            gammaSumArrMap.remove(workflowID);
         }
     }
 
@@ -244,6 +305,7 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         Arrays.setAll(gammaSumArr, i -> gammaArrMap.get(workflowID)[i]);
+        cleanGammaSumBucket(workflowID);
     }
 
     public void receiveShadow(int id, String factor, String[] resultBucket) {
@@ -266,15 +328,26 @@ public class WorkerDataReceiver {
         }
     }
 
+    private final Object shadowLock = new Object();
     private Map<Long, Semaphore> shadowReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> shadowCounterMap = new ConcurrentHashMap<>();
     private Map<Long, String[]> shadowArrMap = new ConcurrentHashMap<>();
 
-    synchronized private void emptyCheckShadow(long workflowID){
-        if(!shadowReadyFlagMap.containsKey(workflowID)){
-            shadowReadyFlagMap.put(workflowID, new Semaphore(0));
-            shadowCounterMap.put(workflowID, new AtomicInteger(0));
-            shadowArrMap.put(workflowID, new String[worker.getClusterSize()]);
+    private void emptyCheckShadow(long workflowID){
+        synchronized (shadowLock){
+            if(!shadowReadyFlagMap.containsKey(workflowID)){
+                shadowReadyFlagMap.put(workflowID, new Semaphore(0));
+                shadowCounterMap.put(workflowID, new AtomicInteger(0));
+                shadowArrMap.put(workflowID, new String[worker.getClusterSize()]);
+            }
+        }
+    }
+
+    private void cleanShadowBucket(long workflowID){
+        synchronized (shadowLock){
+            shadowReadyFlagMap.remove(workflowID);
+            shadowCounterMap.remove(workflowID);
+            shadowArrMap.remove(workflowID);
         }
     }
 
@@ -295,6 +368,7 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         Arrays.setAll(shadowArr, i -> shadowArrMap.get(workflowID)[i]);
+        cleanShadowBucket(workflowID);
     }
 
     public void receiveVerificationFactor(int id, BigInteger factor, BigInteger[] resultBucket) {
@@ -317,15 +391,26 @@ public class WorkerDataReceiver {
         }
     }
 
+    private final Object verificationFactorLock = new Object();
     private Map<Long, Semaphore> verificationFactorReadyFlagMap = new ConcurrentHashMap<>();
     private Map<Long, AtomicInteger> verificationFactorCounterMap = new ConcurrentHashMap<>();
     private Map<Long, BigInteger[]> verificationFactorArrMap = new ConcurrentHashMap<>();
 
-    synchronized private void emptyCheckVerificationFactor(long workflowID){
-        if(!verificationFactorReadyFlagMap.containsKey(workflowID)){
-            verificationFactorReadyFlagMap.put(workflowID, new Semaphore(0));
-            verificationFactorCounterMap.put(workflowID, new AtomicInteger(0));
-            verificationFactorArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+    private void emptyCheckVerificationFactor(long workflowID){
+        synchronized (verificationFactorLock){
+            if(!verificationFactorReadyFlagMap.containsKey(workflowID)){
+                verificationFactorReadyFlagMap.put(workflowID, new Semaphore(0));
+                verificationFactorCounterMap.put(workflowID, new AtomicInteger(0));
+                verificationFactorArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
+            }
+        }
+    }
+
+    private void cleanVerificationFactorBucket(long workflowID){
+        synchronized (verificationFactorLock){
+            verificationFactorReadyFlagMap.remove(workflowID);
+            verificationFactorCounterMap.remove(workflowID);
+            verificationFactorArrMap.remove(workflowID);
         }
     }
 
@@ -346,5 +431,6 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         Arrays.setAll(verificationFactorArr, i -> verificationFactorArrMap.get(workflowID)[i]);
+        cleanVerificationFactorBucket(workflowID);
     }
 }

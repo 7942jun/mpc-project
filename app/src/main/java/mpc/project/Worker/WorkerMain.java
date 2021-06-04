@@ -52,10 +52,6 @@ public class WorkerMain {
     /* Variables for distributed RSA keypair generation */
     private BigInteger p;
     private BigInteger q;
-    private BigInteger[] pArr;          // An array holding p_i ( i \in [1, clusterNum])
-    private BigInteger[] qArr;          // An array holding q_i ( i \in [1, clusterNum])
-    private BigInteger[] hArr;          // An array holding h_i ( i \in [1, clusterNum])
-    private BigInteger[] nPieceArr;
 
     /* Rsa Key
      *    Stores exponent e, modulus N and private d
