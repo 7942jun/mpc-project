@@ -25,15 +25,15 @@ public class WorkerRPCSender {
         this.stubs = stubs;
     }
 
-    public void broadcastModulusGenerationRequest(int bitLength, BigInteger randomPrime, long workflowID){
-        for(int id = 1; id <= worker.getClusterSize(); id++){
+    public void broadcastModulusGenerationRequest(int bitLength, BigInteger randomPrime, long workflowID) {
+        for (int id = 1; id <= worker.getClusterSize(); id++) {
             StdRequest request = RpcUtility.Request.newStdRequest(bitLength, randomPrime);
             stubs[id - 1].generateModulusPiece(request, new StreamObserver<StdResponse>() {
                 @Override
                 public void onNext(StdResponse response) {
                     int id = response.getId();
                     BigInteger modulus = new BigInteger(response.getContents().toByteArray());
-                    worker.getDataReceiver().receiveModulus(id, modulus, workflowID);
+                    worker.getDataReceiver().receiveModulus(modulus, workflowID);
                 }
 
                 @Override
