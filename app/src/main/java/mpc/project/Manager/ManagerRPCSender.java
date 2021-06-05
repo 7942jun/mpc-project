@@ -54,8 +54,7 @@ public class ManagerRPCSender {
             @Override
             public void onNext(StdResponse response) {
                 boolean primalityTestResult = (response.getId() == 1);
-                manager.getDataReceiver().receivePrimalityTestResult(primalityTestResult);
-                System.out.println("received by " + response.getId());
+                manager.getDataReceiver().receivePrimalityTestResult(primalityTestResult, workflowID);
             }
 
             @Override
@@ -96,7 +95,8 @@ public class ManagerRPCSender {
         stubs[id - 1].hostModulusGeneration(request, new StreamObserver<StdResponse>() {
             @Override
             public void onNext(StdResponse response) {
-                manager.getDataReceiver().receiveModulusGenerationResponse(workflowID);
+                BigInteger modulus = new BigInteger(response.getContents().toByteArray());
+                manager.getDataReceiver().receiveModulusGenerationResponse(modulus, workflowID);
             }
 
             @Override
