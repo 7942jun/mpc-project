@@ -38,7 +38,7 @@ public class WorkerRPCSender {
 
                 @Override
                 public void onError(Throwable t) {
-                    System.out.println("RPC error: " + t.getMessage());
+                    System.out.println("Broadcast modulus generation error: " + t.getMessage());
                     System.exit(-1);
                 }
 

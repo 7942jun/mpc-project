@@ -101,7 +101,7 @@ public class ManagerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                System.out.println("RPC error: " + t.getMessage());
+                System.out.println("send host modulus generation request error: " + t.getMessage());
                 manager.getRpcSender().broadcastShutDownWorkerRequest(t.getMessage());
                 System.exit(-1);
             }
