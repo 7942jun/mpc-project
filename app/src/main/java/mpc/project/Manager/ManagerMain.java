@@ -142,19 +142,18 @@ public class ManagerMain {
     class ModulusGenerationThread extends Thread{
         private final int workerID;
         private final Semaphore resultLock;
+        private final long workflowID;
         private boolean stop = false;
-        public ModulusGenerationThread(int workerID, Semaphore resultLock){
+        public ModulusGenerationThread(int workerID, Semaphore resultLock, long workflowID){
             this.workerID = workerID;
             this.resultLock = resultLock;
+            this.workflowID = workflowID;
         }
         @Override
         public void run(){
             boolean isValidModulus;
             BigInteger modulus;
-            long workflowID;
             do{
-                workflowID = workflowCounter.incrementAndGet();
-
                 // generate a possible modulus
                 rpcSender.sendHostModulusGenerationRequest(workerID, keyBitLength, randomPrime, workflowID);
                 modulus = dataReceiver.waitModulusGeneration(workflowID);
@@ -182,7 +181,7 @@ public class ManagerMain {
         Semaphore resultLock = new Semaphore(0);
         ModulusGenerationThread[] workThreadPool = new ModulusGenerationThread[clusterSize];
         for(int i = 0; i < workThreadPool.length; i++){
-            workThreadPool[i] = new ModulusGenerationThread(i+1, resultLock);
+            workThreadPool[i] = new ModulusGenerationThread(i+1, resultLock, i+1);
             workThreadPool[i].start();
         }
         try {
