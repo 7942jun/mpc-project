@@ -95,8 +95,7 @@ public class WorkerRPCSender {
 
     public void sendPrimalityTestRequest(int id, BigInteger g, long workflowID) {
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), g, workflowID);
-        Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].primalityTest(request, new StreamObserver<>() {
+        stubs[id - 1].primalityTest(request, new StreamObserver<>() {
             @Override
             public void onNext(PrimalityTestResponse value) {
                 int id = value.getId();
@@ -114,7 +113,7 @@ public class WorkerRPCSender {
             @Override
             public void onCompleted() {
             }
-        }));
+        });
     }
 
     public void sendGamma(int id, BigInteger gamma, long workflowID) {
@@ -162,8 +161,7 @@ public class WorkerRPCSender {
     }
 
     public void sendDecryptRequest(int id, String encryptedMessage, long workflowID) {
-        Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].decrypt(RpcUtility.Request.newStdRequest(worker.getId(), encryptedMessage),
+        stubs[id - 1].decrypt(RpcUtility.Request.newStdRequest(worker.getId(), encryptedMessage),
                 new StreamObserver<>() {
                     @Override
                     public void onNext(StdResponse response) {
@@ -183,6 +181,6 @@ public class WorkerRPCSender {
                     public void onCompleted() {
 
                     }
-                }));
+                });
     }
 }
