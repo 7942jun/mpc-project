@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class MathUtility {
+    // Todo: maybe we should use generic here for some function
+
     static public BigInteger arraySum(BigInteger[] array) {
         BigInteger result = BigInteger.valueOf(0);
         for (BigInteger element : array) {
@@ -88,6 +90,14 @@ public class MathUtility {
         }
         result[size - 1] = BigInteger.ZERO;
         result[size - 1] = sum.subtract(arraySum(result));
+        return result;
+    }
+
+    static public Long arrayProduct(Long[] array) {
+        Long result = 1L;
+        for (Long element : array) {
+            result *= element;
+        }
         return result;
     }
 
