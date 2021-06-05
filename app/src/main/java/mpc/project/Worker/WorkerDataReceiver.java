@@ -40,19 +40,19 @@ public class WorkerDataReceiver {
     public void receiveBPiece(int id, BigInteger b, long workflowID) {
         emptyCheckBPiece(workflowID);
         bPieceMap.putIfAbsent(workflowID, b);
+        bPieceReadyFlagMap.get(workflowID).release();
     }
 
     public BigInteger waitBPiece(long workflowID) {
         emptyCheckBPiece(workflowID);
         try {
-            bPieceReadyFlagMap.get(workflowID).acquire(worker.getClusterSize() - 1);
+            bPieceReadyFlagMap.get(workflowID).acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        return bPieceMap.get(workflowID);
-//        Arrays.setAll(pArr, i -> pArrMap.get(workflowID)[i]);
-//        Arrays.setAll(qArr, i -> qArrMap.get(workflowID)[i]);
-//        Arrays.setAll(hArr, i -> hArrMap.get(workflowID)[i]);
+        BigInteger b = bPieceMap.get(workflowID);
+        bPieceMap.remove(workflowID);
+        return b;
     }
 
     private final Object modulusMapLock = new Object();

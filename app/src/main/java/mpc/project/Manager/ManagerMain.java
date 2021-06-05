@@ -19,7 +19,7 @@ import mpc.project.util.RpcUtility;
 public class ManagerMain {
     final int clusterMaxSize = 48;
     final int clusterMinSize = 3;
-    final int keyBitLength = 512;
+    final int keyBitLength = 32;
     private int clusterSize;
     private Random rnd;
     private Server server;
@@ -180,7 +180,7 @@ public class ManagerMain {
 //    }
 
     private long validModulusGeneration(){
-        for(int id = 1; id <= clusterSize; id++){
+        for(int id = 1; id <= 1; id++){
             rpcSender.sendHostModulusGenerationRequest(id, keyBitLength, randomPrime, id);
         }
         Pair<BigInteger, Long> modulusWorkflowPair = dataReceiver.waitModulusGeneration();

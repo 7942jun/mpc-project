@@ -3,15 +3,21 @@
  */
 package mpc.project;
 
+import io.grpc.netty.shaded.io.netty.util.internal.logging.InternalLogger;
+import io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLoggerFactory;
 import mpc.project.util.MathUtility;
 import org.junit.Test;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Random;
+import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
 public class AppTest {
+    private static InternalLogger LOGGER = Slf4JLoggerFactory.getInstance(AppTest.class);
+
     @Test
     public void testGenRandBig() {
         int bitNum = 32;
@@ -21,7 +27,7 @@ public class AppTest {
     }
 
     @Test
-    public void generatePrimeTable() {
+    public void testGeneratePrimeTable() {
         Long[] primeNumberUnder100Long = {
             2L, 3L, 5L, 7L, 11L, 13L, 17L, 19L, 23L, 29L, 31L, 37L, 41L, 43L, 47L, 53L, 59L, 61L, 67L, 71L, 73L, 79L, 83L, 89L, 97L
         };
@@ -38,5 +44,17 @@ public class AppTest {
         assertArrayEquals(primeNumberUnder100BigInt, p2);
 
         // assertArrayEquals(primeNumberUnder100BigInt;
+    }
+
+    @Test
+    public void testArraySumToN(){
+        BigInteger[] arr = MathUtility.generateRandomArraySumToN(10, BigInteger.valueOf(1000));
+        System.out.println(Arrays.toString(arr));
+
+        BigInteger sum = BigInteger.ZERO;
+        for (BigInteger i : arr) {
+            sum = sum.add(i);
+        }
+        assertEquals(sum, BigInteger.valueOf(1000));
     }
 }

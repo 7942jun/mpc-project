@@ -9,7 +9,10 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mpc.project.util.*;
+import mpc.project.util.Key;
+import mpc.project.util.MathUtility;
+import mpc.project.util.Pair;
+import mpc.project.util.RSA;
 
 public class WorkerMain {
     private Server server;
@@ -110,7 +113,7 @@ public class WorkerMain {
             rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
             System.out.println("host waiting for modulus generation");
             result = dataReceiver.waitModulus(workflowID);
-            System.out.println("modulus is " + result);
+//            System.out.println("modulus is " + result);
             passPrimalityTest = primalityTestHost(workflowID);
         }while (!abortModulusGeneration && !passPrimalityTest);
         return result;
@@ -118,41 +121,53 @@ public class WorkerMain {
 
     public BigInteger generateModulus(int bitNum, BigInteger randomPrime, long workflowID) {
         // Todo: distributed sieving of p and q
-        BigInteger p = BigInteger.probablePrime(bitNum, rnd);
-//        BigInteger p = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
-        BigInteger q = BigInteger.probablePrime(bitNum, rnd);
-//        BigInteger q = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
+//        BigInteger p = BigInteger.probablePrime(bitNum, rnd);
+        BigInteger p = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
+//        BigInteger q = BigInteger.probablePrime(bitNum, rnd);
+        BigInteger q = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
         generateFGH(p, q, randomPrime, workflowID);
         generateNPiece(randomPrime, workflowID);
         BigInteger modulus = generateN(randomPrime, workflowID);
         modulusMap.put(workflowID, modulus);
         pqMap.put(workflowID, new Pair<>(p, q));
+        System.out.println("modulus is " + modulus);
         return modulus;
     }
 
+
     private BigInteger generateSievedProbablePrime(int bitNum, BigInteger randomPrime, long workflowID) {
+        System.out.println("generate Sieved probable prime");
         Sieve sieve = new Sieve(clusterSize, bitNum);
         BigInteger a = sieve.generateSievedNumber(rnd);
-        BigInteger b = BigInteger.ZERO;
+        BigInteger b;
         int round = 1;
+        System.out.println("round 1");
         if (id == 1) {
+            System.out.println("round 1 server 1");
             BigInteger[] bArr = MathUtility.generateRandomArraySumToN(clusterSize, a);
             b = bArr[0];
+            System.out.println("Integer: " + b);
             for (int i = 2; i <= clusterSize; i++) {
-                rpcSender.sendBPiece(i, bArr[i], workflowID);
+                rpcSender.sendBPiece(i, bArr[i-1], workflowID);
             }
+            System.out.println("Broadcast finished");
             round++;
         } else {
+            System.out.println("round others");
             b = dataReceiver.waitBPiece(workflowID);
+            System.out.println("Integer:" + b);
             round++;
         }
+        System.out.println("Round 1 safe");
         while (round <= clusterSize) {
+            System.out.println("Round " + round + " server " + id);
             if (id == round) {
-                generateFGH(b, a, randomPrime, workflowID);
+                System.out.println("I'm special!");
+                generateFGH(b, a, sieve.getM(), workflowID);
             } else {
-                generateFGH(b, BigInteger.ZERO, randomPrime, workflowID);
+                generateFGH(b, BigInteger.ZERO, sieve.getM(), workflowID);
             }
-            b = updateBPiece(randomPrime, workflowID, sieve.getM());
+            b = updateBPiece(workflowID, sieve.getM());
             round++;
         }
         return sieve.getRandomFactor(rnd).multiply(sieve.getM()).add(b);
@@ -190,7 +205,8 @@ public class WorkerMain {
         }
     }
 
-    private BigInteger updateBPiece(BigInteger randomFactor, long workflowID, BigInteger M) {
+
+    private BigInteger updateBPiece(long workflowID, BigInteger M) {
         BigInteger[] pArr = new BigInteger[clusterSize];
         BigInteger[] qArr = new BigInteger[clusterSize];
         BigInteger[] hArr = new BigInteger[clusterSize];
@@ -208,8 +224,10 @@ public class WorkerMain {
         BigInteger[] qArr = new BigInteger[clusterSize];
         BigInteger[] hArr = new BigInteger[clusterSize];
         dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
-        // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
-        BigInteger nPiece = MathUtility.computeSharingResult(pArr, qArr, hArr, randomPrime);
+        BigInteger nPiece = (MathUtility.arraySum(pArr).mod(randomPrime)
+                .multiply(MathUtility.arraySum(qArr).mod(randomPrime))).mod(randomPrime)
+                .add(MathUtility.arraySum(hArr).mod(randomPrime))
+                .mod(randomPrime);
         for (int i = 1; i <= clusterSize; i++) {
             rpcSender.sendNPiece(i, nPiece, workflowID);
         }
@@ -218,7 +236,7 @@ public class WorkerMain {
     private BigInteger generateN(BigInteger randomPrime, long workflowID) {
         BigInteger[] nPieceArr = new BigInteger[clusterSize];
         dataReceiver.waitNPieces(workflowID, nPieceArr);
-        double[] values = MathUtility.computeAllValuesOfLagrangianPolynomialAtZero(clusterSize);
+        double[] values = MathUtility.computeValuesOfLagrangianPolynomialsAtZero(clusterSize);
         BigDecimal N = new BigDecimal(0);
         for (int i = 0; i < nPieceArr.length; i++) {
             BigDecimal Ni = new BigDecimal(nPieceArr[i]);

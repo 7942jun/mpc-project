@@ -224,12 +224,11 @@ public class MathUtility {
         BigInteger[] arr = new BigInteger[size];
         Arrays.fill(arr, BigInteger.ZERO);
         BigInteger i = BigInteger.ZERO;
-
         while (i.compareTo(N) < 0) {
-            arr[rnd.nextInt() % size] = arr[rnd.nextInt() % size].add(BigInteger.ONE);
+            int r = (rnd.nextInt() & Integer.MAX_VALUE);
+            arr[r % size] = arr[r % size].add(BigInteger.ONE);
             i = i.add(BigInteger.ONE);
         }
-
         return arr;
     }
 }

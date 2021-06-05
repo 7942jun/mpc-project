@@ -68,6 +68,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onCompleted() {
+                System.out.println("Sent to id " + (id - 1));
             }
         }));
     }
