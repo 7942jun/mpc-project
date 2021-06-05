@@ -1,6 +1,9 @@
 package mpc.project.util;
 
+import org.checkerframework.checker.units.qual.A;
+
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Random;
 
 public class MathUtility {
@@ -116,5 +119,43 @@ public class MathUtility {
                 .multiply(MathUtility.arraySum(qArr).mod(modulo))).mod(modulo)
                 .add(MathUtility.arraySum(hArr).mod(modulo))
                 .mod(modulo);
+    }
+
+    static public Long[] generatePrimeNumberTable(long upperBound) {
+        ArrayList<Long> primeNumberTable = new ArrayList<>();
+        primeNumberTable.add(2L);
+        for (Long i = 3L; i <= upperBound; i += 2) {
+            boolean isPrime = true;
+            for (Long j : primeNumberTable) {
+                if (i % j == 0) {
+                    isPrime = false;
+                    break;
+                }
+            }
+            if (isPrime) {
+                primeNumberTable.add(i);
+            }
+        }
+        return primeNumberTable.toArray(new Long[0]);
+    }
+
+    static public BigInteger[] generatePrimeNumberTable(BigInteger upperBound) {
+        ArrayList<BigInteger> primeNumberTable = new ArrayList<>();
+        primeNumberTable.add(BigInteger.TWO);
+        BigInteger i = BigInteger.valueOf(3);
+        while (i.compareTo(upperBound) <= 0) {
+            boolean isPrime = true;
+            for (BigInteger j : primeNumberTable) {
+                if (i.mod(j).equals(BigInteger.ZERO)) {
+                    isPrime = false;
+                    break;
+                }
+            }
+            if (isPrime) {
+                primeNumberTable.add(i);
+            }
+            i = i.add(BigInteger.TWO);
+        }
+        return primeNumberTable.toArray(new BigInteger[0]);
     }
 }
