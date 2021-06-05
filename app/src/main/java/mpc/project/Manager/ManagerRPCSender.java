@@ -112,6 +112,26 @@ public class ManagerRPCSender {
         });
     }
 
+    public void sendAbortModulusGenerationRequest(int id){
+        StdRequest request = RpcUtility.Request.newStdRequest(id);
+        stubs[id - 1].abortModulusGeneration(request, new StreamObserver<StdResponse>() {
+            @Override
+            public void onNext(StdResponse response) {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                System.out.println("send abort modulus generation request error: " + t.getMessage());
+                manager.getRpcSender().broadcastShutDownWorkerRequest(t.getMessage());
+                System.exit(-1);
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        });
+    }
+
     public void sendDecryptionRequest(int id, String encryptedMessage, String[] resultBucket) {
         stubs[id - 1].decrypt(RpcUtility.Request.newStdRequest(id, encryptedMessage),
                 new StreamObserver<StdResponse>() {

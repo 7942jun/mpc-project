@@ -12,13 +12,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import mpc.project.StdRequest;
 import mpc.project.WorkerServiceGrpc;
 import mpc.project.util.Key;
+import mpc.project.util.Pair;
 import mpc.project.util.RSA;
 import mpc.project.util.RpcUtility;
 
 public class ManagerMain {
     final int clusterMaxSize = 48;
     final int clusterMinSize = 3;
-    final int keyBitLength = 64;
+    final int keyBitLength = 512;
     private int clusterSize;
     private Random rnd;
     private Server server;
@@ -136,65 +137,60 @@ public class ManagerMain {
         });
     }
 
-    private final AtomicInteger workflowCounter = new AtomicInteger(0);
-    private BigInteger resultModulus;
-    private long resultWorkflowID;
-    class ModulusGenerationThread extends Thread{
-        private final int workerID;
-        private final Semaphore resultLock;
-        private final long workflowID;
-        private boolean stop = false;
-        public ModulusGenerationThread(int workerID, Semaphore resultLock, long workflowID){
-            this.workerID = workerID;
-            this.resultLock = resultLock;
-            this.workflowID = workflowID;
-        }
-        @Override
-        public void run(){
-            boolean isValidModulus;
-            BigInteger modulus;
-            do{
-                // generate a possible modulus
-                rpcSender.sendHostModulusGenerationRequest(workerID, keyBitLength, randomPrime, workflowID);
-                modulus = dataReceiver.waitModulusGeneration(workflowID);
-
-                // perform primality test
-                rpcSender.sendHostPrimalityTestRequest(workerID, workflowID);
-                isValidModulus = dataReceiver.waitPrimalityTestResult(workflowID);
-
-                // stop check
-                if(stop){
-                    return;
-                }
-
-            }while (!isValidModulus);
-            resultWorkflowID = workflowID;
-            resultModulus = modulus;
-            resultLock.release();
-        }
-        public void setStop(){
-            stop = true;
-        }
-    }
+//    private final AtomicInteger workflowCounter = new AtomicInteger(0);
+//    private BigInteger resultModulus;
+//    private long resultWorkflowID;
+//    class ModulusGenerationThread extends Thread{
+//        private final int workerID;
+//        private final Semaphore resultLock;
+//        private final long workflowID;
+//        private boolean stop = false;
+//        public ModulusGenerationThread(int workerID, Semaphore resultLock, long workflowID){
+//            this.workerID = workerID;
+//            this.resultLock = resultLock;
+//            this.workflowID = workflowID;
+//        }
+//        @Override
+//        public void run(){
+//            boolean isValidModulus;
+//            BigInteger modulus;
+//            do{
+//                // generate a possible modulus
+//                rpcSender.sendHostModulusGenerationRequest(workerID, keyBitLength, randomPrime, workflowID);
+//                modulus = dataReceiver.waitModulusGeneration(workflowID);
+//
+//                // perform primality test
+//                rpcSender.sendHostPrimalityTestRequest(workerID, workflowID);
+//                isValidModulus = dataReceiver.waitPrimalityTestResult(workflowID);
+//
+//                // stop check
+//                if(stop){
+//                    return;
+//                }
+//
+//            }while (!isValidModulus);
+//            resultWorkflowID = workflowID;
+//            resultModulus = modulus;
+//            resultLock.release();
+//        }
+//        public void setStop(){
+//            stop = true;
+//        }
+//    }
 
     private long validModulusGeneration(){
-        Semaphore resultLock = new Semaphore(0);
-        ModulusGenerationThread[] workThreadPool = new ModulusGenerationThread[clusterSize];
-        for(int i = 0; i < workThreadPool.length; i++){
-            workThreadPool[i] = new ModulusGenerationThread(i+1, resultLock, i+1);
-            workThreadPool[i].start();
+        for(int id = 1; id <= clusterSize; id++){
+            rpcSender.sendHostModulusGenerationRequest(id, keyBitLength, randomPrime, id);
         }
-        try {
-            resultLock.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        for(int i = 0; i < workThreadPool.length; i++){
-            workThreadPool[i].setStop();
-        }
+        Pair<BigInteger, Long> modulusWorkflowPair = dataReceiver.waitModulusGeneration();
+        BigInteger resultModulus = modulusWorkflowPair.first;
+        Long resultWorkflowID = modulusWorkflowPair.second;
         System.out.println(
                 "finished modulus generation, modulus: "+resultModulus+", workflow id: "+resultWorkflowID
         );
+        for(int id = 1; id <= clusterSize; id++){
+            rpcSender.sendAbortModulusGenerationRequest(id);
+        }
         return resultWorkflowID;
     }
 

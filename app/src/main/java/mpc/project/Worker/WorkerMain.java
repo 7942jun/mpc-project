@@ -1,6 +1,5 @@
 package mpc.project.Worker;
 
-import com.google.common.math.PairedStats;
 import io.grpc.*;
 
 import java.math.BigDecimal;
@@ -38,6 +37,11 @@ public class WorkerMain {
 
     public void setId(int id) {
         this.id = id;
+    }
+
+    private volatile boolean abortModulusGeneration;
+    public void setAbortModulusGeneration(boolean abortModulusGeneration){
+        this.abortModulusGeneration = abortModulusGeneration;
     }
 
     private final Random rnd;
@@ -102,10 +106,16 @@ public class WorkerMain {
     }
 
     public BigInteger hostModulusGeneration(int bitNum, BigInteger randomPrime, long workflowID) {
-        rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
-        System.out.println("host waiting for modulus generation");
-        BigInteger result = dataReceiver.waitModulus(workflowID);
-        System.out.println("modulus is " + modulusMap.get(workflowID));
+        boolean passPrimalityTest;
+        BigInteger result;
+        setAbortModulusGeneration(false);
+        do{
+            rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
+            System.out.println("host waiting for modulus generation");
+            result = dataReceiver.waitModulus(workflowID);
+            System.out.println("modulus is " + result);
+            passPrimalityTest = primalityTestHost(workflowID);
+        }while (!abortModulusGeneration && !passPrimalityTest);
         return result;
     }
 

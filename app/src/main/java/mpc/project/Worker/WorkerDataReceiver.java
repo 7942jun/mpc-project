@@ -54,6 +54,7 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         BigInteger result = modulusMap.get(workflowID);
+        modulusMap.remove(workflowID);
         return result;
     }
 

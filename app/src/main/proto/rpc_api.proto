@@ -17,6 +17,7 @@ service WorkerService {
   rpc generateModulusPiece(StdRequest) returns (StdResponse) {}
   rpc exchangePrimesPQH (ExchangePrimespqhRequest) returns (StdResponse) {}
   rpc exchangeNPiece(StdRequest) returns (StdResponse) {}
+  rpc abortModulusGeneration(StdRequest) returns (StdResponse) {}
 
   /* Primality test utilities */
   rpc hostPrimalityTest(StdRequest) returns (StdResponse) {}

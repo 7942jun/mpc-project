@@ -126,6 +126,13 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
     }
 
     @Override
+    public void abortModulusGeneration(StdRequest request, StreamObserver<StdResponse> responseObserver){
+        worker.setAbortModulusGeneration(true);
+        responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
+        responseObserver.onCompleted();
+    }
+
+    @Override
     public void exchangeGamma(StdRequest request, StreamObserver<StdResponse> responseObserver) {
         int id = request.getId();
         BigInteger gamma = new BigInteger(request.getContents().toByteArray());

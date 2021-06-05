@@ -1,5 +1,6 @@
 package mpc.project.Manager;
 
+import mpc.project.util.Pair;
 import org.checkerframework.checker.units.qual.C;
 
 import java.math.BigInteger;
@@ -43,35 +44,24 @@ public class ManagerDataReceiver {
         }
     }
 
-    private final Map<Long, Semaphore> modulusGenerationFlagMap = new ConcurrentHashMap<>();
-    private final Map<Long, BigInteger> modulusMap = new ConcurrentHashMap<>();
-
-    synchronized private void checkEmptyModulusGeneration(long workflowID){
-        if(!modulusGenerationFlagMap.containsKey(workflowID)){
-            modulusGenerationFlagMap.put(workflowID, new Semaphore(0));
-        }
-    }
-
-    private void cleanModulusBucket(long workflowID){
-        modulusGenerationFlagMap.remove(workflowID);
-        modulusMap.remove(workflowID);
-    }
+    private final Semaphore modulusGenerationFlag = new Semaphore(0);
+    private Pair<BigInteger, Long> modulusWorkflowPair;
 
     public void receiveModulusGenerationResponse(BigInteger modulus, long workflowID) {
-        checkEmptyModulusGeneration(workflowID);
-        modulusMap.put(workflowID, modulus);
-        modulusGenerationFlagMap.get(workflowID).release();
+        modulusWorkflowPair = new Pair<>(modulus, workflowID);
+        modulusGenerationFlag.release();
     }
 
-    public BigInteger waitModulusGeneration(long workflowID) {
-        checkEmptyModulusGeneration(workflowID);
+    public Pair<BigInteger, Long> waitModulusGeneration() {
         try {
-            modulusGenerationFlagMap.get(workflowID).acquire();
+            modulusGenerationFlag.acquire();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        BigInteger result = modulusMap.get(workflowID);
-        cleanModulusBucket(workflowID);
+        Pair<BigInteger, Long> result = new Pair<>(
+                modulusWorkflowPair.first,
+                modulusWorkflowPair.second
+        );
         return result;
     }
 
