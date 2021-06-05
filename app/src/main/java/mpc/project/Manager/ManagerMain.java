@@ -18,7 +18,7 @@ import mpc.project.util.RpcUtility;
 public class ManagerMain {
     final int clusterMaxSize = 48;
     final int clusterMinSize = 3;
-    final int keyBitLength = 512;
+    final int keyBitLength = 64;
     private int clusterSize;
     private Random rnd;
     private Server server;

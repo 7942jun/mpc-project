@@ -171,7 +171,6 @@ public class WorkerMain {
         }
         key.setN(N.toBigInteger().mod(randomPrime));
         RSA.init(key.getN());
-        System.out.println("The modulus is :" + key.getN());
         return key.getN();
     }
 
