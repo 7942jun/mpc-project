@@ -51,6 +51,27 @@ public class WorkerRPCSender {
         }
     }
 
+    public void sendBPiece(int id, BigInteger b, long workflowID) {
+        StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), b, workflowID);
+        Context ctx = Context.current().fork();
+        ctx.run(() -> stubs[id - 1].initializeBPiece(request, new StreamObserver<>() {
+            @Override
+            public void onNext(StdResponse response) {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+//                t.printStackTrace();
+                System.out.println("initialize B piece RPC error for " + id + " : " + t.getMessage());
+                System.exit(-1);
+            }
+
+            @Override
+            public void onCompleted() {
+            }
+        }));
+    }
+
     public void sendPQH(int id, BigInteger p, BigInteger q, BigInteger h, long workflowID) {
         ExchangePrimespqhRequest request = RpcUtility.Request.newExchangePrimesRequest(worker.getId(), p, q, h, workflowID);
         Context ctx = Context.current().fork();

@@ -9,10 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mpc.project.util.Key;
-import mpc.project.util.MathUtility;
-import mpc.project.util.Pair;
-import mpc.project.util.RSA;
+import mpc.project.util.*;
 
 public class WorkerMain {
     private Server server;
@@ -120,14 +117,45 @@ public class WorkerMain {
     }
 
     public BigInteger generateModulus(int bitNum, BigInteger randomPrime, long workflowID) {
+        // Todo: distributed sieving of p and q
         BigInteger p = BigInteger.probablePrime(bitNum, rnd);
+//        BigInteger p = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
         BigInteger q = BigInteger.probablePrime(bitNum, rnd);
+//        BigInteger q = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
         generateFGH(p, q, randomPrime, workflowID);
         generateNPiece(randomPrime, workflowID);
         BigInteger modulus = generateN(randomPrime, workflowID);
         modulusMap.put(workflowID, modulus);
         pqMap.put(workflowID, new Pair<>(p, q));
         return modulus;
+    }
+
+    private BigInteger generateSievedProbablePrime(int bitNum, BigInteger randomPrime, long workflowID) {
+        Sieve sieve = new Sieve(clusterSize, bitNum);
+        BigInteger a = sieve.generateSievedNumber(rnd);
+        BigInteger b = BigInteger.ZERO;
+        int round = 1;
+        if (id == 1) {
+            BigInteger[] bArr = MathUtility.generateRandomArraySumToN(clusterSize, a);
+            b = bArr[0];
+            for (int i = 2; i <= clusterSize; i++) {
+                rpcSender.sendBPiece(i, bArr[i], workflowID);
+            }
+            round++;
+        } else {
+            b = dataReceiver.waitBPiece(workflowID);
+            round++;
+        }
+        while (round <= clusterSize) {
+            if (id == round) {
+                generateFGH(b, a, randomPrime, workflowID);
+            } else {
+                generateFGH(b, BigInteger.ZERO, randomPrime, workflowID);
+            }
+            b = updateBPiece(randomPrime, workflowID, sieve.getM());
+            round++;
+        }
+        return sieve.getRandomFactor(rnd).multiply(sieve.getM()).add(b);
     }
 
     private void generateFGH(BigInteger p, BigInteger q, BigInteger randomPrime, long workflowID) {
@@ -162,13 +190,25 @@ public class WorkerMain {
         }
     }
 
+    private BigInteger updateBPiece(BigInteger randomFactor, long workflowID, BigInteger M) {
+        BigInteger[] pArr = new BigInteger[clusterSize];
+        BigInteger[] qArr = new BigInteger[clusterSize];
+        BigInteger[] hArr = new BigInteger[clusterSize];
+        dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
+
+        BigDecimal intermediateB = new BigDecimal(
+                MathUtility.computeSharingResult(pArr, qArr, hArr, M));
+
+        double l = MathUtility.computeTermOfLagrangianPolynomialAtZero(id, clusterSize);
+        return intermediateB.multiply(BigDecimal.valueOf(l)).toBigInteger();
+    }
+
     private void generateNPiece(BigInteger randomPrime, long workflowID) {
         BigInteger[] pArr = new BigInteger[clusterSize];
         BigInteger[] qArr = new BigInteger[clusterSize];
         BigInteger[] hArr = new BigInteger[clusterSize];
         dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
         // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
-        // Todo: extract this into MathUtility to reuse in distributed sieving
         BigInteger nPiece = MathUtility.computeSharingResult(pArr, qArr, hArr, randomPrime);
         for (int i = 1; i <= clusterSize; i++) {
             rpcSender.sendNPiece(i, nPiece, workflowID);

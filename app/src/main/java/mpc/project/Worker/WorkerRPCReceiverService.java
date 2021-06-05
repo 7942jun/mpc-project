@@ -6,6 +6,7 @@ import io.grpc.stub.StreamObserver;
 import mpc.project.*;
 import mpc.project.util.RSA;
 import mpc.project.util.RpcUtility;
+import org.bouncycastle.jcajce.provider.keystore.bc.BcKeyStoreSpi;
 
 import java.math.BigInteger;
 
@@ -56,14 +57,24 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
     }
 
     @Override
-    public void shutDownWorker(StdRequest request, StreamObserver<StdResponse> responseObserver){
+    public void shutDownWorker(StdRequest request, StreamObserver<StdResponse> responseObserver) {
         String shutDownMessage = new String((request.getContents().toByteArray()));
         System.out.println("Shutting down worker by shutDown RPC request, message: " + shutDownMessage);
         System.exit(0);
     }
 
     @Override
-    public void hostModulusGeneration(StdRequest request, StreamObserver<StdResponse> responseObserver){
+    public void initializeBPiece(StdRequest request, StreamObserver<StdResponse> responseObserver) {
+        int id = request.getId();
+        BigInteger b = new BigInteger(request.getContents().toByteArray());
+        long workflowID = request.getWorkflowID();
+        worker.getDataReceiver().receiveBPiece(id, b, workflowID);
+        responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void hostModulusGeneration(StdRequest request, StreamObserver<StdResponse> responseObserver) {
         // id is used for bitNum now, not id
         int bitNum = request.getId();
         BigInteger randomPrime = new BigInteger(request.getContents().toByteArray());
@@ -107,10 +118,10 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
     }
 
     @Override
-    public void hostPrimalityTest(StdRequest request, StreamObserver<StdResponse> responseObserver){
+    public void hostPrimalityTest(StdRequest request, StreamObserver<StdResponse> responseObserver) {
         long workflowID = request.getWorkflowID();
         boolean passPrimalityTest = worker.primalityTestHost(workflowID);
-        int resultCode = passPrimalityTest? 1 : 0;
+        int resultCode = passPrimalityTest ? 1 : 0;
         responseObserver.onNext(RpcUtility.Response.newStdResponse(resultCode));
         responseObserver.onCompleted();
     }

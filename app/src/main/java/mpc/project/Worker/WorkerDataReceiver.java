@@ -25,6 +25,36 @@ public class WorkerDataReceiver {
         nPieceArrMap.clear();
     }
 
+    private final Object bPieceMapLock = new Object();
+    private final Map<Long, Semaphore> bPieceReadyFlagMap = new ConcurrentHashMap<>();
+    private final Map<Long, BigInteger> bPieceMap = new ConcurrentHashMap<>();
+
+    private void emptyCheckBPiece(long workflowID) {
+        synchronized (bPieceMapLock) {
+            if (!bPieceReadyFlagMap.containsKey(workflowID)) {
+                bPieceReadyFlagMap.put(workflowID, new Semaphore(0));
+            }
+        }
+    }
+
+    public void receiveBPiece(int id, BigInteger b, long workflowID) {
+        emptyCheckBPiece(workflowID);
+        bPieceMap.putIfAbsent(workflowID, b);
+    }
+
+    public BigInteger waitBPiece(long workflowID) {
+        emptyCheckBPiece(workflowID);
+        try {
+            bPieceReadyFlagMap.get(workflowID).acquire(worker.getClusterSize() - 1);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return bPieceMap.get(workflowID);
+//        Arrays.setAll(pArr, i -> pArrMap.get(workflowID)[i]);
+//        Arrays.setAll(qArr, i -> qArrMap.get(workflowID)[i]);
+//        Arrays.setAll(hArr, i -> hArrMap.get(workflowID)[i]);
+    }
+
     private final Object modulusMapLock = new Object();
     private final Map<Long, Semaphore> modulusReadyFlagMap = new ConcurrentHashMap<>();
     private final Map<Long, BigInteger> modulusMap = new ConcurrentHashMap<>();
