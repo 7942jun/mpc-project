@@ -12,34 +12,7 @@ public class WorkerDataReceiver {
 
     public WorkerDataReceiver(WorkerMain worker) {
         this.worker = worker;
-        try {
-            this.gammaReadyFlag.acquire();
-            this.gammaSumReadyFlag.acquire();
-            this.verificationFactorsReadyFlag.acquire();
-            this.shadowsReadyFlag.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
-
-    public BigInteger[] gammaArr;
-    public BigInteger[] gammaSumArr;
-
-    public final Object exchangeGammaLock = new Object();
-    private final Semaphore gammaReadyFlag = new Semaphore(1);
-    private int exchangeGammaCounter = 0;
-
-    public final Object exchangeGammaSumLock = new Object();
-    private final Semaphore gammaSumReadyFlag = new Semaphore(1);
-    private int exchangeGammaSumCounter = 0;
-
-    private final Object shadowReceivingLock = new Object();
-    private final Semaphore shadowsReadyFlag = new Semaphore(1);
-    private int shadowReceivingCounter = 0;
-
-    private final Object verificationFactorsLock = new Object();
-    private final Semaphore verificationFactorsReadyFlag = new Semaphore(1);
-    private int verificationFactorsCounter = 0;
 
     private final Object modulusMapLock = new Object();
     private final Map<Long, Semaphore> modulusReadyFlagMap = new ConcurrentHashMap<>();
@@ -177,27 +150,6 @@ public class WorkerDataReceiver {
         cleanNPieceBucket(workflowID);
     }
 
-
-    public void receiveGamma(int id, BigInteger gamma) {
-        int i = id - 1;
-        gammaArr[i] = gamma;
-        synchronized (exchangeGammaLock) {
-            exchangeGammaCounter++;
-            if (exchangeGammaCounter == worker.getClusterSize()) {
-                gammaReadyFlag.release();
-                exchangeGammaCounter = 0;
-            }
-        }
-    }
-
-    public void waitGamma() {
-        try {
-            gammaReadyFlag.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     private final Object gammaLock = new Object();
     private final Map<Long, Semaphore> gammaReadyFlagMap = new ConcurrentHashMap<>();
     private final Map<Long, AtomicInteger> gammaCounterMap = new ConcurrentHashMap<>();
@@ -240,26 +192,6 @@ public class WorkerDataReceiver {
         cleanGammaBucket(workflowID);
     }
 
-    public void receiveGammaSum(int id, BigInteger gammaSum) {
-        int i = id - 1;
-        gammaSumArr[i] = gammaSum;
-        synchronized (exchangeGammaSumLock) {
-            exchangeGammaSumCounter++;
-            if (exchangeGammaSumCounter == worker.getClusterSize()) {
-                gammaSumReadyFlag.release();
-                exchangeGammaSumCounter = 0;
-            }
-        }
-    }
-
-    public void waitGammaSum() {
-        try {
-            gammaSumReadyFlag.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
     private final Object gammaSumLock = new Object();
     private final Map<Long, Semaphore> gammaSumReadyFlagMap = new ConcurrentHashMap<>();
     private final Map<Long, AtomicInteger> gammaSumCounterMap = new ConcurrentHashMap<>();
@@ -300,26 +232,6 @@ public class WorkerDataReceiver {
         }
         Arrays.setAll(gammaSumArr, i -> gammaArrMap.get(workflowID)[i]);
         cleanGammaSumBucket(workflowID);
-    }
-
-    public void receiveShadow(int id, String factor, String[] resultBucket) {
-        int j = id - 1;
-        resultBucket[j] = factor;
-        synchronized (shadowReceivingLock) {
-            shadowReceivingCounter++;
-            if (shadowReceivingCounter == worker.getClusterSize()) {
-                shadowsReadyFlag.release();
-                shadowReceivingCounter = 0;
-            }
-        }
-    }
-
-    public void waitShadows() {
-        try {
-            shadowsReadyFlag.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     private final Object shadowLock = new Object();

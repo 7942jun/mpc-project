@@ -95,7 +95,7 @@ public class WorkerMain {
         }
     }
 
-    public BigInteger hostModulusGeneration(int bitNum, BigInteger randomPrime, long workflowID){
+    public BigInteger hostModulusGeneration(int bitNum, BigInteger randomPrime, long workflowID) {
         rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
         System.out.println("host waiting for modulus generation");
         BigInteger result = dataReceiver.waitModulus(workflowID);
@@ -176,7 +176,7 @@ public class WorkerMain {
     }
 
     public boolean primalityTestHost(long workflowID) {
-        if(!modulusMap.containsKey(workflowID)){
+        if (!modulusMap.containsKey(workflowID)) {
             System.out.println("workflowID not found! id: " + workflowID);
             return false;
         }
@@ -211,9 +211,6 @@ public class WorkerMain {
         return g.modPow(p.add(q), modulus);
     }
 
-    BigInteger[] gammaArr;
-    BigInteger[] gammaSumArr;
-
     public void generatePrivateKey(long workflowID) {
         // Todo: change server 1 every time to do load balancing
         Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
@@ -224,14 +221,16 @@ public class WorkerMain {
                 BigInteger.ZERO.subtract(p).subtract((q));
         BigInteger[] gammaArrLocal = MathUtility.generateRandomSumArray(phi, clusterSize, rnd);
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendGamma(i, gammaArrLocal[i - 1]);
+            rpcSender.sendGamma(i, gammaArrLocal[i - 1], workflowID);
         }
-        dataReceiver.waitGamma();
+        BigInteger[] gammaArr = new BigInteger[clusterSize];
+        dataReceiver.waitGamma(workflowID, gammaArr);
         BigInteger gammaSum = MathUtility.arraySum(gammaArr);
+        BigInteger[] gammaSumArr = new BigInteger[clusterSize];
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendGammaSum(i, gammaSum);
+            rpcSender.sendGammaSum(i, gammaSum, clusterSize);
         }
-        dataReceiver.waitGammaSum();
+        dataReceiver.waitGammaSum(clusterSize, gammaSumArr);
         BigInteger l = MathUtility.arraySum(gammaSumArr).mod(key.getE());
 
         BigDecimal zeta = BigDecimal.ONE.divide(new BigDecimal(l), RoundingMode.HALF_UP)
@@ -246,7 +245,7 @@ public class WorkerMain {
         if (id == 1) {
             String testMessage = "test";
             String encryptedTestMessage = RSA.encrypt(testMessage, key);
-            String[] decryptionResults = trialDecryption(encryptedTestMessage);
+            String[] decryptionResults = trialDecryption(encryptedTestMessage, workflowID);
             boolean foundR = false;
             for (int r = 0; r < clusterSize; r++) {
                 // Fixme: I'm not sure if this is implemented correctly
@@ -266,13 +265,13 @@ public class WorkerMain {
         }
     }
 
-    private String[] trialDecryption(String encryptedMessage) {
+    private String[] trialDecryption(String encryptedMessage, long workflowID) {
         String[] result = new String[clusterSize];
         for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendDecryptRequest(i, encryptedMessage, result);
+            rpcSender.sendDecryptRequest(i, encryptedMessage, workflowID);
         }
         System.out.println("Waiting for trial decryption to complete");
-        dataReceiver.waitShadows();
+        dataReceiver.waitShadow(workflowID, result);
         return result;
     }
 }

@@ -117,54 +117,10 @@ public class WorkerRPCSender {
         }));
     }
 
-    public void sendGamma(int id, BigInteger gamma) {
-        StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), gamma);
-        Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].exchangeGamma(request, new StreamObserver<>() {
-            @Override
-            public void onNext(StdResponse response) {
-//                System.out.println("received by " + response.getId());
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                t.printStackTrace();
-                System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
-                System.exit(-1);
-            }
-
-            @Override
-            public void onCompleted() {
-            }
-        }));
-    }
-
     public void sendGamma(int id, BigInteger gamma, long workflowID) {
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), gamma, workflowID);
         Context ctx = Context.current().fork();
         ctx.run(() -> stubs[id - 1].exchangeGamma(request, new StreamObserver<>() {
-            @Override
-            public void onNext(StdResponse response) {
-//                System.out.println("received by " + response.getId());
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                t.printStackTrace();
-                System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
-                System.exit(-1);
-            }
-
-            @Override
-            public void onCompleted() {
-            }
-        }));
-    }
-
-    public void sendGammaSum(int id, BigInteger gammaSum) {
-        StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), gammaSum);
-        Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].exchangeGammaSum(request, new StreamObserver<>() {
             @Override
             public void onNext(StdResponse response) {
 //                System.out.println("received by " + response.getId());
@@ -205,32 +161,7 @@ public class WorkerRPCSender {
         }));
     }
 
-    public void sendDecryptRequest(int id, String encryptedMessage, String[] resultBucket) {
-        Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].decrypt(RpcUtility.Request.newStdRequest(worker.getId(), encryptedMessage),
-                new StreamObserver<>() {
-                    @Override
-                    public void onNext(StdResponse response) {
-                        int id = response.getId();
-                        String shadow = new String(response.getContents().toByteArray());
-                        worker.getDataReceiver().receiveShadow(id, shadow, resultBucket);
-                    }
-
-                    @Override
-                    public void onError(Throwable t) {
-                        t.printStackTrace();
-                        System.out.println("trial decryption error: " + t.getMessage());
-                        System.exit(-1);
-                    }
-
-                    @Override
-                    public void onCompleted() {
-
-                    }
-                }));
-    }
-
-    public void sendDecryptRequest(int id, String encryptedMessage, String[] resultBucket, long workflowID) {
+    public void sendDecryptRequest(int id, String encryptedMessage, long workflowID) {
         Context ctx = Context.current().fork();
         ctx.run(() -> stubs[id - 1].decrypt(RpcUtility.Request.newStdRequest(worker.getId(), encryptedMessage),
                 new StreamObserver<>() {
