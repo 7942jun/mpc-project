@@ -28,6 +28,7 @@ public class WorkerRPCSender {
     public void broadcastModulusGenerationRequest(int bitLength, BigInteger randomPrime, long workflowID) {
         for (int id = 1; id <= worker.getClusterSize(); id++) {
             StdRequest request = RpcUtility.Request.newStdRequest(bitLength, randomPrime, workflowID);
+            int finalId = id;
             stubs[id - 1].generateModulusPiece(request, new StreamObserver<StdResponse>() {
                 @Override
                 public void onNext(StdResponse response) {
@@ -38,12 +39,13 @@ public class WorkerRPCSender {
 
                 @Override
                 public void onError(Throwable t) {
-                    System.out.println("Broadcast modulus generation error: " + t.getMessage());
+                    System.out.println("Broadcast modulus generation error, id: " + finalId + ", " + t.getMessage());
                     System.exit(-1);
                 }
 
                 @Override
                 public void onCompleted() {
+                    worker.getDataReceiver().countModulus(workflowID);
                 }
             });
         }
@@ -59,7 +61,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                t.printStackTrace();
+//                t.printStackTrace();
                 System.out.println("exchangePQH RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
@@ -81,7 +83,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                t.printStackTrace();
+//                t.printStackTrace();
                 System.out.println("sendNPiece RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
@@ -105,13 +107,14 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                t.printStackTrace();
-                System.out.println("primalityTest to Guests RPC Error: " + t.getMessage());
+//                t.printStackTrace();
+                System.out.println("primalityTest to Guests RPC Error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
             @Override
             public void onCompleted() {
+                worker.getDataReceiver().countVerificationFactor(workflowID);
             }
         });
     }
@@ -127,7 +130,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                t.printStackTrace();
+//                t.printStackTrace();
                 System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
@@ -149,7 +152,7 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-                t.printStackTrace();
+//                t.printStackTrace();
                 System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
@@ -172,14 +175,14 @@ public class WorkerRPCSender {
 
                     @Override
                     public void onError(Throwable t) {
-                        t.printStackTrace();
+//                        t.printStackTrace();
                         System.out.println("trial decryption error: " + t.getMessage());
                         System.exit(-1);
                     }
 
                     @Override
                     public void onCompleted() {
-
+                        worker.getDataReceiver().countShadow(workflowID);
                     }
                 });
     }

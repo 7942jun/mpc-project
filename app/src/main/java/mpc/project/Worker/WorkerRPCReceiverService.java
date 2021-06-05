@@ -91,9 +91,9 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
         BigInteger q = new BigInteger(request.getQ().toByteArray());
         BigInteger h = new BigInteger(request.getH().toByteArray());
         long workflowID = request.getWorkflowID();
+        worker.getDataReceiver().receivePHQ(id, p, q, h, workflowID);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
         responseObserver.onCompleted();
-        worker.getDataReceiver().receivePHQ(id, p, q, h, workflowID);
     }
 
     @Override
@@ -101,9 +101,9 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
         int id = request.getId();
         BigInteger nPiece = new BigInteger(request.getContents().toByteArray());
         long workflowID = request.getWorkflowID();
+        worker.getDataReceiver().receiveNPiece(id, nPiece, workflowID);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
         responseObserver.onCompleted();
-        worker.getDataReceiver().receiveNPiece(id, nPiece, workflowID);
     }
 
     @Override
@@ -130,9 +130,9 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
         int id = request.getId();
         BigInteger gamma = new BigInteger(request.getContents().toByteArray());
         long workflowID = request.getWorkflowID();
+        worker.getDataReceiver().receiveGamma(id, gamma, workflowID);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
         responseObserver.onCompleted();
-        worker.getDataReceiver().receiveGamma(id, gamma, workflowID);
     }
 
     @Override
@@ -140,9 +140,9 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
         int id = request.getId();
         BigInteger gammaSum = new BigInteger(request.getContents().toByteArray());
         long workflowID = request.getWorkflowID();
+        worker.getDataReceiver().receiveGammaSum(id, gammaSum, workflowID);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id));
         responseObserver.onCompleted();
-        worker.getDataReceiver().receiveGammaSum(id, gammaSum, workflowID);
     }
 
     @Override
