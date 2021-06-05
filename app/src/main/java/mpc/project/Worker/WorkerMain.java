@@ -64,10 +64,16 @@ public class WorkerMain {
      *    public key:  <e, N>
      *    private key: <d, N>
      */
-    private Key key = new Key();
+    private final Key key = new Key();
 
     public Key getKey() {
         return key;
+    }
+
+    private void cleanupModulusGenerationMap() {
+        modulusMap.clear();
+        pqMap.clear();
+        dataReceiver.cleanupModulusGenerationBucket();
     }
 
     public WorkerMain(int portNum) {
@@ -169,9 +175,8 @@ public class WorkerMain {
             BigDecimal Ni = new BigDecimal(nPieceArr[i]);
             N = N.add(Ni.multiply(BigDecimal.valueOf(values[i])));
         }
-        key.setN(N.toBigInteger().mod(randomPrime));
-        RSA.init(key.getN());
-        return key.getN();
+        BigInteger modulus = N.toBigInteger().mod(randomPrime);
+        return modulus;
     }
 
     public boolean primalityTestHost(long workflowID) {
@@ -215,6 +220,10 @@ public class WorkerMain {
         Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
         BigInteger p = pair.first;
         BigInteger q = pair.second;
+        BigInteger modulus = modulusMap.get(workflowID);
+        cleanupModulusGenerationMap();
+        key.setN(modulus);
+        RSA.init(modulus);
         BigInteger phi = (id == 1) ?
                 key.getN().subtract(p).subtract(q).add(BigInteger.ONE) :
                 BigInteger.ZERO.subtract(p).subtract((q));

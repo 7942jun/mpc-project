@@ -14,6 +14,17 @@ public class WorkerDataReceiver {
         this.worker = worker;
     }
 
+    public void cleanupModulusGenerationBucket() {
+        modulusReadyFlagMap.clear();
+        modulusMap.clear();
+        primesReadyFlagMap.clear();
+        pArrMap.clear();
+        qArrMap.clear();
+        hArrMap.clear();
+        nPieceReadyFlagMap.clear();
+        nPieceArrMap.clear();
+    }
+
     private final Object modulusMapLock = new Object();
     private final Map<Long, Semaphore> modulusReadyFlagMap = new ConcurrentHashMap<>();
     private final Map<Long, BigInteger> modulusMap = new ConcurrentHashMap<>();
@@ -26,19 +37,12 @@ public class WorkerDataReceiver {
         }
     }
 
-    private void cleanModulusBucket(long workflowID) {
-        synchronized (modulusMapLock) {
-            modulusReadyFlagMap.remove(workflowID);
-            modulusMap.remove(workflowID);
-        }
-    }
-
     public void receiveModulus(BigInteger modulus, long workflowID) {
         emptyCheckModulus(workflowID);
         modulusMap.putIfAbsent(workflowID, modulus);
     }
 
-    public void countModulus(long workflowID){
+    public void countModulus(long workflowID) {
         modulusReadyFlagMap.get(workflowID).release();
     }
 
@@ -50,7 +54,6 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         BigInteger result = modulusMap.get(workflowID);
-        cleanModulusBucket(workflowID);
         return result;
     }
 
@@ -68,15 +71,6 @@ public class WorkerDataReceiver {
                 qArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
                 hArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
             }
-        }
-    }
-
-    private void cleanPrimesBucket(long workflowID) {
-        synchronized (primesLock) {
-            primesReadyFlagMap.remove(workflowID);
-            pArrMap.remove(workflowID);
-            qArrMap.remove(workflowID);
-            hArrMap.remove(workflowID);
         }
     }
 
@@ -98,7 +92,6 @@ public class WorkerDataReceiver {
         Arrays.setAll(pArr, i -> pArrMap.get(workflowID)[i]);
         Arrays.setAll(qArr, i -> qArrMap.get(workflowID)[i]);
         Arrays.setAll(hArr, i -> hArrMap.get(workflowID)[i]);
-        cleanPrimesBucket(workflowID);
     }
 
     private final Object nPieceLock = new Object();
@@ -111,13 +104,6 @@ public class WorkerDataReceiver {
                 nPieceReadyFlagMap.put(workflowID, new Semaphore(0));
                 nPieceArrMap.put(workflowID, new BigInteger[worker.getClusterSize()]);
             }
-        }
-    }
-
-    private void cleanNPieceBucket(long workflowID) {
-        synchronized (nPieceLock) {
-            nPieceReadyFlagMap.remove(workflowID);
-            nPieceArrMap.remove(workflowID);
         }
     }
 
@@ -135,7 +121,6 @@ public class WorkerDataReceiver {
             e.printStackTrace();
         }
         Arrays.setAll(nPieceArr, i -> nPieceArrMap.get(workflowID)[i]);
-        cleanNPieceBucket(workflowID);
     }
 
     private final Object gammaLock = new Object();
@@ -237,7 +222,7 @@ public class WorkerDataReceiver {
         shadowArrMap.get(workflowID)[id - 1] = shadow;
     }
 
-    public void countShadow(long workflowID){
+    public void countShadow(long workflowID) {
         shadowReadyFlagMap.get(workflowID).release();
     }
 
@@ -277,7 +262,7 @@ public class WorkerDataReceiver {
         verificationFactorArrMap.get(workflowID)[id - 1] = verificationFactor;
     }
 
-    public void countVerificationFactor(long workflowID){
+    public void countVerificationFactor(long workflowID) {
         verificationFactorReadyFlagMap.get(workflowID).release();
     }
 
