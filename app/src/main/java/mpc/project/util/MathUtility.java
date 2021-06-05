@@ -4,6 +4,7 @@ import org.checkerframework.checker.units.qual.A;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class MathUtility {
@@ -39,14 +40,6 @@ public class MathUtility {
         }
 
         return results;
-    }
-
-    static public BigInteger genRandPrimeBig(int bitNum, BigInteger lessThanThis, Random rnd) {
-        BigInteger result;
-        do {
-            result = BigInteger.probablePrime(bitNum, rnd);
-        } while (result.compareTo(lessThanThis) >= 0);
-        return result;
     }
 
     static public BigInteger genRandBig(int bitLength, Random rnd) {
@@ -157,5 +150,76 @@ public class MathUtility {
             i = i.add(BigInteger.TWO);
         }
         return primeNumberTable.toArray(new BigInteger[0]);
+    }
+
+    static public Long[] generatePrimeNumberTable(long lowerBound, long upperBound) {
+        Long[] primeBefore = generatePrimeNumberTable(lowerBound);
+        ArrayList<Long> primeAfter = new ArrayList<>();
+        for (Long i = lowerBound % 2 == 0 ? lowerBound : lowerBound + 1; i <= upperBound; i += 2) {
+            boolean isPrime = true;
+            for (Long j : primeBefore) {
+                if (i % j == 0) {
+                    isPrime = false;
+                    break;
+                }
+            }
+            if (!primeAfter.isEmpty()) {
+                for (Long j : primeAfter) {
+                    if (i % j == 0) {
+                        isPrime = false;
+                        break;
+                    }
+                }
+            }
+            if (isPrime) {
+                primeAfter.add(i);
+            }
+        }
+        return primeAfter.toArray(new Long[0]);
+    }
+
+    static public BigInteger[] generatePrimeNumberTable(BigInteger lowerBound, BigInteger upperBound) {
+        BigInteger[] primeBefore = generatePrimeNumberTable(lowerBound);
+        ArrayList<BigInteger> primeAfter = new ArrayList<>();
+        BigInteger i = BigInteger.valueOf(3);
+        while (i.compareTo(upperBound) <= 0) {
+            boolean isPrime = true;
+
+            for (BigInteger j : primeBefore) {
+                if (i.mod(j).equals(BigInteger.ZERO)) {
+                    isPrime = false;
+                    break;
+                }
+            }
+
+            if (!primeAfter.isEmpty()) {
+                for (BigInteger j : primeAfter) {
+                    if (i.mod(j).equals(BigInteger.ZERO)) {
+                        isPrime = false;
+                        break;
+                    }
+                }
+            }
+
+            if (isPrime) {
+                primeAfter.add(i);
+            }
+            i = i.add(BigInteger.TWO);
+        }
+        return primeAfter.toArray(new BigInteger[0]);
+    }
+
+    static public BigInteger[] generateRandomArraySumToN(int size, BigInteger N) {
+        Random rnd = new Random();
+        BigInteger[] arr = new BigInteger[size];
+        Arrays.fill(arr, BigInteger.ZERO);
+        BigInteger i = BigInteger.ZERO;
+
+        while (i.compareTo(N) < 0) {
+            arr[rnd.nextInt() % size] = arr[rnd.nextInt() % size].add(BigInteger.ONE);
+            i = i.add(BigInteger.ONE);
+        }
+
+        return arr;
     }
 }
