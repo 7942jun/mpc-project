@@ -117,7 +117,7 @@ public class WorkerMain {
             if(result.gcd(BigInteger.valueOf(30)).equals(BigInteger.ONE)){
                 passPrimalityTest = primalityTestHost(workflowID);
             }
-//            System.out.println("modulus is " + result);
+            System.out.println("modulus is " + result);
         } while (!abortModulusGeneration && !passPrimalityTest);
         return result;
     }
@@ -137,32 +137,22 @@ public class WorkerMain {
     }
 
     private BigInteger generateSievedProbablePrime(int bitNum, long workflowID) {
-        System.out.println("generate Sieved probable prime");
         BigInteger a = sieve.generateSievedNumber(clusterSize, bitNum, rnd);
         BigInteger b;
         int round = 1;
-        System.out.println("round 1");
         if (id == 1) {
-            System.out.println("round 1 server 1");
             BigInteger[] bArr = MathUtility.generateRandomArraySumToN(clusterSize, a, rnd);
             b = bArr[0];
-            System.out.println("Integer: " + b);
             for (int i = 2; i <= clusterSize; i++) {
                 rpcSender.sendBPiece(i, bArr[i - 1], workflowID);
             }
-            System.out.println("Broadcast finished");
             round++;
         } else {
-            System.out.println("round others");
             b = dataReceiver.waitBPiece(workflowID);
-            System.out.println("Integer:" + b);
             round++;
         }
-        System.out.println("Round 1 safe");
         while (round <= clusterSize) {
-            System.out.println("Round " + round + " server " + id);
             if (id == round) {
-                System.out.println("I'm special!");
                 generateFGH(b, a, sieve.getM(), (long) round *clusterSize + workflowID);
             } else {
                 generateFGH(b, BigInteger.ZERO, sieve.getM(), (long) round *clusterSize + workflowID);
