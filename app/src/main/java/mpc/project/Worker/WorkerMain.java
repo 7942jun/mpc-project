@@ -144,7 +144,7 @@ public class WorkerMain {
         System.out.println("round 1");
         if (id == 1) {
             System.out.println("round 1 server 1");
-            BigInteger[] bArr = MathUtility.generateRandomArraySumToN(clusterSize, a);
+            BigInteger[] bArr = MathUtility.generateRandomArraySumToN(clusterSize, a, rnd);
             b = bArr[0];
             System.out.println("Integer: " + b);
             for (int i = 2; i <= clusterSize; i++) {

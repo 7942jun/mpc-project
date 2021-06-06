@@ -48,9 +48,11 @@ public class AppTest {
 
     @Test
     public void testArraySumToN(){
-        BigInteger[] arr = MathUtility.generateRandomArraySumToN(10, BigInteger.valueOf(1000));
+        BigInteger[] arr = MathUtility.generateRandomArraySumToN(10, BigInteger.valueOf(1000), new Random());
         System.out.println(Arrays.toString(arr));
-
+        for(int i = 0; i < arr.length; i++){
+            assert arr[i].signum() >= 0;
+        }
         BigInteger sum = BigInteger.ZERO;
         for (BigInteger i : arr) {
             sum = sum.add(i);

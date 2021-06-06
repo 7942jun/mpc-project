@@ -2,6 +2,7 @@ package mpc.project.util;
 
 import org.checkerframework.checker.units.qual.A;
 
+import javax.naming.ldap.Rdn;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -219,16 +220,15 @@ public class MathUtility {
         return primeAfter.toArray(new BigInteger[0]);
     }
 
-    static public BigInteger[] generateRandomArraySumToN(int size, BigInteger N) {
-        Random rnd = new Random();
+    static public BigInteger[] generateRandomArraySumToN(int size, BigInteger N, Random rnd) {
         BigInteger[] arr = new BigInteger[size];
         Arrays.fill(arr, BigInteger.ZERO);
-        BigInteger i = BigInteger.ZERO;
-        while (i.compareTo(N) < 0) {
-            int r = (rnd.nextInt() & Integer.MAX_VALUE);
-            arr[r % size] = arr[r % size].add(BigInteger.ONE);
-            i = i.add(BigInteger.ONE);
+        BigInteger remain = N;
+        for(int i = 0; i < size-1; i++){
+            arr[i] = genRandBig(N.bitLength(), rnd).mod(remain.divide(BigInteger.TWO));
+            remain = remain.subtract(arr[i]);
         }
+        arr[size-1] = remain;
         return arr;
     }
 }
