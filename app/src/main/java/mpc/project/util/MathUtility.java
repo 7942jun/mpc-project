@@ -1,8 +1,5 @@
 package mpc.project.util;
 
-import org.checkerframework.checker.units.qual.A;
-
-import javax.naming.ldap.Rdn;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,6 +12,14 @@ public class MathUtility {
         BigInteger result = BigInteger.valueOf(0);
         for (BigInteger element : array) {
             result = result.add(element);
+        }
+        return result;
+    }
+
+    static public <T extends Number> BigInteger arrayProduct(T[] array) {
+        BigInteger result = BigInteger.ONE;
+        for (T element : array) {
+            result = result.multiply(new BigInteger(String.valueOf(element)));
         }
         return result;
     }
@@ -94,30 +99,6 @@ public class MathUtility {
         return result;
     }
 
-    static public Long arrayProduct(Long[] array) {
-        Long result = 1L;
-        for (Long element : array) {
-            result *= element;
-        }
-        return result;
-    }
-
-    static public BigInteger arrayProduct(BigInteger[] array) {
-        BigInteger result = BigInteger.ONE;
-        for (BigInteger element : array) {
-            result = result.multiply(element);
-        }
-        return result;
-    }
-
-    static public BigInteger[] toBigIntegerArray(long[] array) {
-        BigInteger[] result = new BigInteger[array.length];
-        for (int i = 0; i < array.length; i++) {
-            result[i] = BigInteger.valueOf(array[i]);
-        }
-        return result;
-    }
-
     static public BigInteger computeSharingResult(BigInteger[] pArr, BigInteger[] qArr, BigInteger[] hArr, BigInteger modulo) {
         return (MathUtility.arraySum(pArr).mod(modulo)
                 .multiply(MathUtility.arraySum(qArr).mod(modulo))).mod(modulo)
@@ -125,29 +106,11 @@ public class MathUtility {
                 .mod(modulo);
     }
 
-    static public Long[] generatePrimeNumberTable(long upperBound) {
-        ArrayList<Long> primeNumberTable = new ArrayList<>();
-        primeNumberTable.add(2L);
-        for (Long i = 3L; i <= upperBound; i += 2) {
-            boolean isPrime = true;
-            for (Long j : primeNumberTable) {
-                if (i % j == 0) {
-                    isPrime = false;
-                    break;
-                }
-            }
-            if (isPrime) {
-                primeNumberTable.add(i);
-            }
-        }
-        return primeNumberTable.toArray(new Long[0]);
-    }
-
-    static public BigInteger[] generatePrimeNumberTable(BigInteger upperBound) {
+    static public <T extends Number> BigInteger[] generatePrimeNumberTable(T upperBound) {
         ArrayList<BigInteger> primeNumberTable = new ArrayList<>();
         primeNumberTable.add(BigInteger.TWO);
         BigInteger i = BigInteger.valueOf(3);
-        while (i.compareTo(upperBound) <= 0) {
+        while (i.compareTo(new BigInteger(String.valueOf(upperBound))) <= 0) {
             boolean isPrime = true;
             for (BigInteger j : primeNumberTable) {
                 if (i.mod(j).equals(BigInteger.ZERO)) {
@@ -163,41 +126,14 @@ public class MathUtility {
         return primeNumberTable.toArray(new BigInteger[0]);
     }
 
-    static public Long[] generatePrimeNumberTable(long lowerBound, long upperBound) {
-        Long[] primeBefore = generatePrimeNumberTable(lowerBound);
-        ArrayList<Long> primeAfter = new ArrayList<>();
-        for (Long i = lowerBound % 2 == 0 ? lowerBound : lowerBound + 1; i <= upperBound; i += 2) {
-            boolean isPrime = true;
-            for (Long j : primeBefore) {
-                if (i % j == 0) {
-                    isPrime = false;
-                    break;
-                }
-            }
-            if (!primeAfter.isEmpty()) {
-                for (Long j : primeAfter) {
-                    if (i % j == 0) {
-                        isPrime = false;
-                        break;
-                    }
-                }
-            }
-            if (isPrime) {
-                primeAfter.add(i);
-            }
-        }
-        return primeAfter.toArray(new Long[0]);
-    }
-
-    static public BigInteger[] generatePrimeNumberTable(BigInteger lowerBound, BigInteger upperBound) {
-        BigInteger[] primeBefore = generatePrimeNumberTable(lowerBound);
+    static public <T extends Number> BigInteger[] generatePrimeNumberTable(T upperBound, T[] primeBefore) {
         ArrayList<BigInteger> primeAfter = new ArrayList<>();
         BigInteger i = BigInteger.valueOf(3);
-        while (i.compareTo(upperBound) <= 0) {
+        while (i.compareTo(new BigInteger(String.valueOf(upperBound))) <= 0) {
             boolean isPrime = true;
 
-            for (BigInteger j : primeBefore) {
-                if (i.mod(j).equals(BigInteger.ZERO)) {
+            for (T j : primeBefore) {
+                if (i.mod(new BigInteger(String.valueOf(j))).equals(BigInteger.ZERO)) {
                     isPrime = false;
                     break;
                 }
