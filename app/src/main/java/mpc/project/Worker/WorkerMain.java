@@ -220,9 +220,7 @@ public class WorkerMain {
         dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
         // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
         BigInteger nPiece = MathUtility.computeSharingResult(pArr, qArr, hArr, randomPrime);
-        for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendNPiece(i, nPiece, workflowID);
-        }
+        rpcSender.broadcastNPiece(nPiece, workflowID);
     }
 
     private BigInteger generateN(BigInteger randomPrime, long workflowID) {
@@ -249,9 +247,8 @@ public class WorkerMain {
 
         BigInteger[] verificationArray = new BigInteger[this.clusterSize];
 
-        for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendPrimalityTestRequest(i, g, workflowID);
-        }
+        rpcSender.broadcastPrimalityTestRequest(g, workflowID);
+
         dataReceiver.waitVerificationFactor(workflowID, verificationArray);
 
         BigInteger v = BigInteger.valueOf(1);
@@ -294,9 +291,7 @@ public class WorkerMain {
         dataReceiver.waitGamma(workflowID, gammaArr);
         BigInteger gammaSum = MathUtility.arraySum(gammaArr);
         BigInteger[] gammaSumArr = new BigInteger[clusterSize];
-        for (int i = 1; i <= clusterSize; i++) {
-            rpcSender.sendGammaSum(i, gammaSum, clusterSize);
-        }
+        rpcSender.broadcastGammaSum(gammaSum, workflowID);
         dataReceiver.waitGammaSum(clusterSize, gammaSumArr);
         BigInteger l = MathUtility.arraySum(gammaSumArr).mod(key.getE());
 

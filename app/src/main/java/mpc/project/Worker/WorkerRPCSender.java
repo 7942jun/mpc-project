@@ -26,8 +26,8 @@ public class WorkerRPCSender {
     }
 
     public void broadcastModulusGenerationRequest(int bitLength, BigInteger randomPrime, long workflowID) {
+        StdRequest request = RpcUtility.Request.newStdRequest(bitLength, randomPrime, workflowID);
         for (int id = 1; id <= worker.getClusterSize(); id++) {
-            StdRequest request = RpcUtility.Request.newStdRequest(bitLength, randomPrime, workflowID);
             int finalId = id;
             stubs[id - 1].generateModulusPiece(request, new StreamObserver<StdResponse>() {
                 @Override
@@ -95,50 +95,56 @@ public class WorkerRPCSender {
         }));
     }
 
-    public void sendNPiece(int id, BigInteger nPiece, long workflowID) {
+    public void broadcastNPiece(BigInteger nPiece, long workflowID){
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), nPiece, workflowID);
         Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].exchangeNPiece(request, new StreamObserver<>() {
-            @Override
-            public void onNext(StdResponse response) {
-            }
+        ctx.run(() -> {
+                    for(int id = 1; id <= worker.getClusterSize(); id++){
+                        int finalId = id;
+                        stubs[id - 1].exchangeNPiece(request, new StreamObserver<>() {
+                            @Override
+                            public void onNext(StdResponse response) {
+                            }
 
-            @Override
-            public void onError(Throwable t) {
-//                t.printStackTrace();
-                System.out.println("sendNPiece RPC error for " + id + " : " + t.getMessage());
-                System.exit(-1);
-            }
+                            @Override
+                            public void onError(Throwable t) {
+                                System.out.println("sendNPiece RPC error for " + finalId + " : " + t.getMessage());
+                                System.exit(-1);
+                            }
 
-            @Override
-            public void onCompleted() {
-//                System.out.println("sent!");
-            }
-        }));
+                            @Override
+                            public void onCompleted() {
+                            }
+                        });
+                    }
+                });
     }
 
-    public void sendPrimalityTestRequest(int id, BigInteger g, long workflowID) {
+    public void broadcastPrimalityTestRequest(BigInteger g, long workflowID){
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), g, workflowID);
-        stubs[id - 1].primalityTest(request, new StreamObserver<>() {
-            @Override
-            public void onNext(PrimalityTestResponse value) {
-                int id = value.getId();
-                BigInteger v = new BigInteger(value.getV().toByteArray());
-                worker.getDataReceiver().receiveVerificationFactor(id, v, workflowID);
-            }
+        for(int id = 1; id <= worker.getClusterSize(); id++){
+            int finalId = id;
+            stubs[id - 1].primalityTest(request, new StreamObserver<>() {
+                @Override
+                public void onNext(PrimalityTestResponse value) {
+                    int id = value.getId();
+                    BigInteger v = new BigInteger(value.getV().toByteArray());
+                    worker.getDataReceiver().receiveVerificationFactor(id, v, workflowID);
+                }
 
-            @Override
-            public void onError(Throwable t) {
+                @Override
+                public void onError(Throwable t) {
 //                t.printStackTrace();
-                System.out.println("primalityTest to Guests RPC Error for " + id + " : " + t.getMessage());
-                System.exit(-1);
-            }
+                    System.out.println("primalityTest to Guests RPC Error for " + finalId + " : " + t.getMessage());
+                    System.exit(-1);
+                }
 
-            @Override
-            public void onCompleted() {
-                worker.getDataReceiver().countVerificationFactor(workflowID);
-            }
-        });
+                @Override
+                public void onCompleted() {
+                    worker.getDataReceiver().countVerificationFactor(workflowID);
+                }
+            });
+        }
     }
 
     public void sendGamma(int id, BigInteger gamma, long workflowID) {
@@ -163,26 +169,32 @@ public class WorkerRPCSender {
         }));
     }
 
-    public void sendGammaSum(int id, BigInteger gammaSum, long workflowID) {
+    public void broadcastGammaSum(BigInteger gammaSum, long workflowID){
         StdRequest request = RpcUtility.Request.newStdRequest(worker.getId(), gammaSum, workflowID);
         Context ctx = Context.current().fork();
-        ctx.run(() -> stubs[id - 1].exchangeGammaSum(request, new StreamObserver<>() {
-            @Override
-            public void onNext(StdResponse response) {
+        ctx.run(()->{
+            for(int id = 1; id <= worker.getClusterSize(); id++){
+                int finalId = id;
+                stubs[id - 1].exchangeGammaSum(request, new StreamObserver<>() {
+                    @Override
+                    public void onNext(StdResponse response) {
 //                System.out.println("received by " + response.getId());
-            }
+                    }
 
-            @Override
-            public void onError(Throwable t) {
+                    @Override
+                    public void onError(Throwable t) {
 //                t.printStackTrace();
-                System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
-                System.exit(-1);
-            }
+                        System.out.println("sendGamma RPC error for " + finalId + " : " + t.getMessage());
+                        System.exit(-1);
+                    }
 
-            @Override
-            public void onCompleted() {
+                    @Override
+                    public void onCompleted() {
+                    }
+                });
             }
-        }));
+        });
+
     }
 
     public void sendDecryptRequest(int id, String encryptedMessage, long workflowID) {
