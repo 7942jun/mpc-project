@@ -8,6 +8,7 @@ import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Semaphore;
 
 import mpc.project.util.*;
 
@@ -103,15 +104,18 @@ public class WorkerMain {
     }
 
     public BigInteger hostModulusGeneration(int bitNum, BigInteger randomPrime, long workflowID) {
-        boolean passPrimalityTest;
+        boolean passPrimalityTest = false;
         BigInteger result;
         setAbortModulusGeneration(false);
         do {
             rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
             System.out.println("host waiting for modulus generation");
             result = dataReceiver.waitModulus(workflowID);
+            // Todo: implement more elegant trail division
+            if(result.gcd(BigInteger.valueOf(30)).equals(BigInteger.ONE)){
+                passPrimalityTest = primalityTestHost(workflowID);
+            }
 //            System.out.println("modulus is " + result);
-            passPrimalityTest = primalityTestHost(workflowID);
         } while (!abortModulusGeneration && !passPrimalityTest);
         return result;
     }
@@ -127,7 +131,6 @@ public class WorkerMain {
         BigInteger modulus = generateN(randomPrime, workflowID);
         modulusMap.put(workflowID, modulus);
         pqMap.put(workflowID, new Pair<>(p, q));
-        System.out.println("modulus is " + modulus);
         return modulus;
     }
 
@@ -166,7 +169,12 @@ public class WorkerMain {
             b = updateBPiece((long) round *clusterSize + workflowID, sieve.getM());
             round++;
         }
-        return sieve.getRandomFactor(rnd).multiply(sieve.getM()).add(b);
+        // to prevent even number
+        BigInteger randomFactor = sieve.getRandomFactor(rnd);
+        if(b.mod(BigInteger.TWO).equals(randomFactor.mod(BigInteger.TWO))) {
+            randomFactor = randomFactor.add(BigInteger.ONE);
+        }
+        return randomFactor.multiply(sieve.getM()).add(b);
     }
 
     private void generateFGH(BigInteger p, BigInteger q, BigInteger randomPrime, long workflowID) {
