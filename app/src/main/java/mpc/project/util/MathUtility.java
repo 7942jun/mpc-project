@@ -8,10 +8,10 @@ import java.util.Random;
 public class MathUtility {
     // Todo: maybe we should use generic here for some function
 
-    static public BigInteger arraySum(BigInteger[] array) {
+    static public <T extends Number> BigInteger arraySum(T[] array) {
         BigInteger result = BigInteger.valueOf(0);
-        for (BigInteger element : array) {
-            result = result.add(element);
+        for (T element : array) {
+            result = result.add(new BigInteger(String.valueOf(element)));
         }
         return result;
     }
