@@ -3,20 +3,16 @@
  */
 package mpc.project;
 
-import io.grpc.netty.shaded.io.netty.util.internal.logging.InternalLogger;
-import io.grpc.netty.shaded.io.netty.util.internal.logging.Slf4JLoggerFactory;
 import mpc.project.util.MathUtility;
 import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.logging.Logger;
 
 import static org.junit.Assert.*;
 
 public class AppTest {
-    private static InternalLogger LOGGER = Slf4JLoggerFactory.getInstance(AppTest.class);
 
     @Test
     public void testGenRandBig() {

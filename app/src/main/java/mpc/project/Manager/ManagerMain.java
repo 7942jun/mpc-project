@@ -3,6 +3,11 @@ package mpc.project.Manager;
 import io.grpc.*;
 
 import java.math.BigInteger;
+import java.sql.Time;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -15,11 +20,12 @@ import mpc.project.util.Key;
 import mpc.project.util.Pair;
 import mpc.project.util.RSA;
 import mpc.project.util.RpcUtility;
+import org.apache.commons.lang.time.DurationFormatUtils;
 
 public class ManagerMain {
     final int clusterMaxSize = 48;
     final int clusterMinSize = 3;
-    final int keyBitLength = 512;
+    final int keyBitLength;
     private int clusterSize;
     private Random rnd;
     private Server server;
@@ -112,9 +118,10 @@ public class ManagerMain {
         return true;
     }
 
-    public ManagerMain(int portNum) {
+    public ManagerMain(int portNum, int keyBitLength) {
         this.portNum = portNum;
         this.rnd = new Random();
+        this.keyBitLength = keyBitLength;
         // Fixme: hard codding 3 * keyBitLength might be a bad idea for large bit length, maybe need to look into this
         this.randomPrime = BigInteger.probablePrime(3 * keyBitLength, rnd);
         try {
@@ -179,17 +186,22 @@ public class ManagerMain {
 //        }
 //    }
 
-    private long validModulusGeneration() {
-        for (int id = 1; id <= clusterSize; id++) {
+    private long validModulusGeneration(){
+        Instant start = Instant.now();
+        for(int id = 1; id <= clusterSize; id++){
             rpcSender.sendHostModulusGenerationRequest(id, keyBitLength, randomPrime, id);
         }
         Pair<BigInteger, Long> modulusWorkflowPair = dataReceiver.waitModulusGeneration();
         BigInteger resultModulus = modulusWorkflowPair.first;
         Long resultWorkflowID = modulusWorkflowPair.second;
         System.out.println(
-                "finished modulus generation, modulus: " + resultModulus + ", workflow id: " + resultWorkflowID
+                "finished modulus generation, modulus: "+resultModulus+", workflow id: "+resultWorkflowID
         );
-        for (int id = 1; id <= clusterSize; id++) {
+        Instant end = Instant.now();
+        long durationMillis = Duration.between(start, end).toMillis();
+        String timeString = DurationFormatUtils.formatDuration(durationMillis, "HH:mm:ss.SSS");
+        System.out.println("generation time consumption: " + timeString);
+        for(int id = 1; id <= clusterSize; id++){
             rpcSender.sendAbortModulusGenerationRequest(id);
         }
         return resultWorkflowID;

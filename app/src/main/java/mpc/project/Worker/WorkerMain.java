@@ -37,8 +37,7 @@ public class WorkerMain {
     }
 
     private volatile boolean abortModulusGeneration;
-
-    public void setAbortModulusGeneration(boolean abortModulusGeneration) {
+    public void setAbortModulusGeneration(boolean abortModulusGeneration){
         this.abortModulusGeneration = abortModulusGeneration;
     }
 
