@@ -229,8 +229,15 @@ public class ManagerMain {
         long workflowID = validModulusGeneration();
         //generatePrivateKey();
         Scanner scanner = new Scanner(System.in);
-        while (!scanner.nextLine().equals("quit")) {
-            String s = scanner.nextLine();
+        while(true){
+            String s = scanner.nextLine().trim();
+            if(s.equals("quit")){
+                break;
+            }
+            if(s.equals("regenerate")){
+                workflowID = validModulusGeneration();
+                //generatePrivateKey();
+            }
             String encryptedString = RSA.encrypt(s, key);
             System.out.println("Encrypted String: " + encryptedString);
             String[] distributedDecryptionResults = decrypt(encryptedString);
