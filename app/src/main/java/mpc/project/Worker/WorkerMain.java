@@ -160,11 +160,11 @@ public class WorkerMain {
             System.out.println("Round " + round + " server " + id);
             if (id == round) {
                 System.out.println("I'm special!");
-                generateFGH(b, a, sieve.getM(), workflowID);
+                generateFGH(b, a, sieve.getM(), (long) round *clusterSize + workflowID);
             } else {
-                generateFGH(b, BigInteger.ZERO, sieve.getM(), workflowID);
+                generateFGH(b, BigInteger.ZERO, sieve.getM(), (long) round *clusterSize + workflowID);
             }
-            b = updateBPiece(workflowID, sieve.getM());
+            b = updateBPiece((long) round *clusterSize + workflowID, sieve.getM());
             round++;
         }
         return sieve.getRandomFactor(rnd).multiply(sieve.getM()).add(b);
