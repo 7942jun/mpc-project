@@ -237,6 +237,7 @@ public class ManagerMain {
             if(s.equals("regenerate")){
                 workflowID = validModulusGeneration();
                 //generatePrivateKey();
+                continue;
             }
             String encryptedString = RSA.encrypt(s, key);
             System.out.println("Encrypted String: " + encryptedString);
