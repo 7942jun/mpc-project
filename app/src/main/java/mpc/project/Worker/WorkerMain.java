@@ -9,10 +9,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
-import mpc.project.util.Key;
-import mpc.project.util.MathUtility;
-import mpc.project.util.Pair;
-import mpc.project.util.RSA;
+import mpc.project.util.*;
 
 public class WorkerMain {
     private Server server;
@@ -236,7 +233,7 @@ public class WorkerMain {
     private BigInteger generateN(BigInteger randomPrime, long workflowID) {
         BigInteger[] nPieceArr = new BigInteger[clusterSize];
         dataReceiver.waitNPieces(workflowID, nPieceArr);
-        double[] values = MathUtility.computeValuesOfLagrangianPolynomialsAtZero(clusterSize);
+        double[] values = MathUtility.computeAllValuesOfLagrangianPolynomialAtZero(clusterSize);
         BigDecimal N = new BigDecimal(0);
         for (int i = 0; i < nPieceArr.length; i++) {
             BigDecimal Ni = new BigDecimal(nPieceArr[i]);
