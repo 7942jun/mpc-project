@@ -37,7 +37,8 @@ public class WorkerMain {
     }
 
     private volatile boolean abortModulusGeneration;
-    public void setAbortModulusGeneration(boolean abortModulusGeneration){
+
+    public void setAbortModulusGeneration(boolean abortModulusGeneration) {
         this.abortModulusGeneration = abortModulusGeneration;
     }
 
@@ -106,22 +107,22 @@ public class WorkerMain {
         boolean passPrimalityTest;
         BigInteger result;
         setAbortModulusGeneration(false);
-        do{
+        do {
             rpcSender.broadcastModulusGenerationRequest(bitNum, randomPrime, workflowID);
             System.out.println("host waiting for modulus generation");
             result = dataReceiver.waitModulus(workflowID);
 //            System.out.println("modulus is " + result);
             passPrimalityTest = primalityTestHost(workflowID);
-        }while (!abortModulusGeneration && !passPrimalityTest);
+        } while (!abortModulusGeneration && !passPrimalityTest);
         return result;
     }
 
     public BigInteger generateModulus(int bitNum, BigInteger randomPrime, long workflowID) {
         // Todo: distributed sieving of p and q
 //        BigInteger p = BigInteger.probablePrime(bitNum, rnd);
-        BigInteger p = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
+        BigInteger p = generateSievedProbablePrime(bitNum, workflowID);
 //        BigInteger q = BigInteger.probablePrime(bitNum, rnd);
-        BigInteger q = generateSievedProbablePrime(bitNum, randomPrime, workflowID);
+        BigInteger q = generateSievedProbablePrime(bitNum, workflowID);
         generateFGH(p, q, randomPrime, workflowID);
         generateNPiece(randomPrime, workflowID);
         BigInteger modulus = generateN(randomPrime, workflowID);
@@ -131,8 +132,7 @@ public class WorkerMain {
         return modulus;
     }
 
-
-    private BigInteger generateSievedProbablePrime(int bitNum, BigInteger randomPrime, long workflowID) {
+    private BigInteger generateSievedProbablePrime(int bitNum, long workflowID) {
         System.out.println("generate Sieved probable prime");
         Sieve sieve = new Sieve(clusterSize, bitNum);
         BigInteger a = sieve.generateSievedNumber(rnd);
@@ -145,7 +145,7 @@ public class WorkerMain {
             b = bArr[0];
             System.out.println("Integer: " + b);
             for (int i = 2; i <= clusterSize; i++) {
-                rpcSender.sendBPiece(i, bArr[i-1], workflowID);
+                rpcSender.sendBPiece(i, bArr[i - 1], workflowID);
             }
             System.out.println("Broadcast finished");
             round++;
@@ -202,7 +202,6 @@ public class WorkerMain {
         }
     }
 
-
     private BigInteger updateBPiece(long workflowID, BigInteger M) {
         BigInteger[] pArr = new BigInteger[clusterSize];
         BigInteger[] qArr = new BigInteger[clusterSize];
@@ -213,7 +212,7 @@ public class WorkerMain {
                 MathUtility.computeSharingResult(pArr, qArr, hArr, M));
 
         double l = MathUtility.computeTermOfLagrangianPolynomialAtZero(id, clusterSize);
-        return intermediateB.multiply(BigDecimal.valueOf(l)).toBigInteger();
+        return intermediateB.multiply(BigDecimal.valueOf(l)).toBigInteger().mod(M);
     }
 
     private void generateNPiece(BigInteger randomPrime, long workflowID) {
@@ -221,10 +220,8 @@ public class WorkerMain {
         BigInteger[] qArr = new BigInteger[clusterSize];
         BigInteger[] hArr = new BigInteger[clusterSize];
         dataReceiver.waitPHQ(workflowID, pArr, qArr, hArr);
-        BigInteger nPiece = (MathUtility.arraySum(pArr).mod(randomPrime)
-                .multiply(MathUtility.arraySum(qArr).mod(randomPrime))).mod(randomPrime)
-                .add(MathUtility.arraySum(hArr).mod(randomPrime))
-                .mod(randomPrime);
+        // [ \sum(p_arr).mod(P) * \sum(q_arr).mod(P) + \sum(h_arr).mod(P) ].mod(P)
+        BigInteger nPiece = MathUtility.computeSharingResult(pArr, qArr, hArr, randomPrime);
         for (int i = 1; i <= clusterSize; i++) {
             rpcSender.sendNPiece(i, nPiece, workflowID);
         }
