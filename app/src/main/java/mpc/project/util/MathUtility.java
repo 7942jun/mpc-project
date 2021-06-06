@@ -163,6 +163,9 @@ public class MathUtility {
         for(int i = 0; i < size-1; i++){
             arr[i] = genRandBig(N.bitLength(), rnd).mod(remain.divide(BigInteger.TWO));
             remain = remain.subtract(arr[i]);
+            if(remain.equals(BigInteger.ONE)){
+                break;
+            }
         }
         arr[size-1] = remain;
         return arr;

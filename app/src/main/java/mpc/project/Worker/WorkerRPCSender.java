@@ -61,14 +61,12 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-//                t.printStackTrace();
                 System.out.println("initialize B piece RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
             @Override
             public void onCompleted() {
-                System.out.println("Sent to id " + (id - 1));
             }
         }));
     }
@@ -83,14 +81,12 @@ public class WorkerRPCSender {
 
             @Override
             public void onError(Throwable t) {
-//                t.printStackTrace();
                 System.out.println("exchangePQH RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
 
             @Override
             public void onCompleted() {
-//                System.out.println("sent!");
             }
         }));
     }
@@ -134,7 +130,6 @@ public class WorkerRPCSender {
 
                 @Override
                 public void onError(Throwable t) {
-//                t.printStackTrace();
                     System.out.println("primalityTest to Guests RPC Error for " + finalId + " : " + t.getMessage());
                     System.exit(-1);
                 }
@@ -153,12 +148,10 @@ public class WorkerRPCSender {
         ctx.run(() -> stubs[id - 1].exchangeGamma(request, new StreamObserver<>() {
             @Override
             public void onNext(StdResponse response) {
-//                System.out.println("received by " + response.getId());
             }
 
             @Override
             public void onError(Throwable t) {
-//                t.printStackTrace();
                 System.out.println("sendGamma RPC error for " + id + " : " + t.getMessage());
                 System.exit(-1);
             }
@@ -178,12 +171,10 @@ public class WorkerRPCSender {
                 stubs[id - 1].exchangeGammaSum(request, new StreamObserver<>() {
                     @Override
                     public void onNext(StdResponse response) {
-//                System.out.println("received by " + response.getId());
                     }
 
                     @Override
                     public void onError(Throwable t) {
-//                t.printStackTrace();
                         System.out.println("sendGamma RPC error for " + finalId + " : " + t.getMessage());
                         System.exit(-1);
                     }
@@ -209,7 +200,6 @@ public class WorkerRPCSender {
 
                     @Override
                     public void onError(Throwable t) {
-//                        t.printStackTrace();
                         System.out.println("trial decryption error: " + t.getMessage());
                         System.exit(-1);
                     }

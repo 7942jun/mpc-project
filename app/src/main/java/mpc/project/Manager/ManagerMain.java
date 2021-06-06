@@ -145,48 +145,8 @@ public class ManagerMain {
         });
     }
 
-//    private final AtomicInteger workflowCounter = new AtomicInteger(0);
-//    private BigInteger resultModulus;
-//    private long resultWorkflowID;
-//    class ModulusGenerationThread extends Thread{
-//        private final int workerID;
-//        private final Semaphore resultLock;
-//        private final long workflowID;
-//        private boolean stop = false;
-//        public ModulusGenerationThread(int workerID, Semaphore resultLock, long workflowID){
-//            this.workerID = workerID;
-//            this.resultLock = resultLock;
-//            this.workflowID = workflowID;
-//        }
-//        @Override
-//        public void run(){
-//            boolean isValidModulus;
-//            BigInteger modulus;
-//            do{
-//                // generate a possible modulus
-//                rpcSender.sendHostModulusGenerationRequest(workerID, keyBitLength, randomPrime, workflowID);
-//                modulus = dataReceiver.waitModulusGeneration(workflowID);
-//
-//                // perform primality test
-//                rpcSender.sendHostPrimalityTestRequest(workerID, workflowID);
-//                isValidModulus = dataReceiver.waitPrimalityTestResult(workflowID);
-//
-//                // stop check
-//                if(stop){
-//                    return;
-//                }
-//
-//            }while (!isValidModulus);
-//            resultWorkflowID = workflowID;
-//            resultModulus = modulus;
-//            resultLock.release();
-//        }
-//        public void setStop(){
-//            stop = true;
-//        }
-//    }
-
     private long validModulusGeneration(){
+        dataReceiver.resetModulusGenerationBucket();
         Instant start = Instant.now();
         for(int id = 1; id <= clusterSize; id++){
             rpcSender.sendHostModulusGenerationRequest(id, keyBitLength, randomPrime, id);

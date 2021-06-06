@@ -8,7 +8,6 @@ import java.math.RoundingMode;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 
 import mpc.project.util.*;
 
@@ -50,7 +49,6 @@ public class WorkerMain {
 
     public void setClusterSize(int clusterSize) {
         this.clusterSize = clusterSize;
-//        dataBucketInit();
     }
 
     public int getClusterSize() {
@@ -58,8 +56,6 @@ public class WorkerMain {
     }
 
     /* Variables for distributed RSA keypair generation */
-//    private BigInteger p;
-//    private BigInteger q;
     private final Map<Long, BigInteger> modulusMap = new ConcurrentHashMap<>();
     private final Map<Long, Pair<BigInteger, BigInteger>> pqMap = new ConcurrentHashMap<>();
 
@@ -124,9 +120,7 @@ public class WorkerMain {
 
     public BigInteger generateModulus(int bitNum, BigInteger randomPrime, long workflowID) {
         // Todo: distributed sieving of p and q
-//        BigInteger p = BigInteger.probablePrime(bitNum, rnd);
         BigInteger p = generateSievedProbablePrime(bitNum, workflowID);
-//        BigInteger q = BigInteger.probablePrime(bitNum, rnd);
         BigInteger q = generateSievedProbablePrime(bitNum, workflowID);
         generateFGH(p, q, randomPrime, workflowID);
         generateNPiece(randomPrime, workflowID);
