@@ -37,6 +37,8 @@ public class WorkerMain {
         this.id = id;
     }
 
+    private final Sieve sieve = new Sieve();
+
     private volatile boolean abortModulusGeneration;
     public void setAbortModulusGeneration(boolean abortModulusGeneration){
         this.abortModulusGeneration = abortModulusGeneration;
@@ -136,8 +138,7 @@ public class WorkerMain {
 
     private BigInteger generateSievedProbablePrime(int bitNum, long workflowID) {
         System.out.println("generate Sieved probable prime");
-        Sieve sieve = new Sieve(clusterSize, bitNum);
-        BigInteger a = sieve.generateSievedNumber(rnd);
+        BigInteger a = sieve.generateSievedNumber(clusterSize, bitNum, rnd);
         BigInteger b;
         int round = 1;
         System.out.println("round 1");

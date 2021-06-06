@@ -5,25 +5,23 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class Sieve {
-    private final int bitNum;
     private BigInteger fixValue = BigInteger.ONE;
     private BigInteger M = BigInteger.ONE;
+    private BigInteger[] primeTable;
+    private int clusterSize = -1;
+    private int bitNum = -1;
 
     public BigInteger getM() {
         return M;
     }
 
-    public BigInteger getRandomFactor(Random rnd) {
-        return MathUtility.genRandBig(BigInteger.TWO.pow(bitNum).divide(M), rnd);
-    }
-
-    public Sieve(int clusterSize, int bitNum) {
-        // Todo: Implement distributed sieving
+    private void updateSieveConfig(int clusterSize, int bitNum){
+        if(this.clusterSize == clusterSize && this.bitNum == bitNum){
+            return;
+        }
+        this.clusterSize = clusterSize;
         this.bitNum = bitNum;
         BigInteger sievingBound = BigInteger.TWO.pow(bitNum - 1);
-
-        BigInteger[] primeTable = MathUtility.generatePrimeNumberTable(BigInteger.valueOf(150000));
-
         int index = Arrays.binarySearch(primeTable, BigInteger.valueOf(clusterSize));
 
         if (index < 0) { // clusterSize is in the prime table
@@ -55,7 +53,18 @@ public class Sieve {
         }
     }
 
-    public BigInteger generateSievedNumber(Random rnd) {
+    public BigInteger getRandomFactor(Random rnd) {
+        return MathUtility.genRandBig(BigInteger.TWO.pow(bitNum).divide(M), rnd);
+    }
+
+    public Sieve() {
+        // Todo: Implement distributed sieving
+        this.primeTable = MathUtility.generatePrimeNumberTable(BigInteger.valueOf(150000));
+
+    }
+
+    public BigInteger generateSievedNumber(int clusterSize, int bitNum, Random rnd) {
+        updateSieveConfig(clusterSize, bitNum);
         BigInteger a = null;
         boolean foundGoodCandidate = false;
         do {
