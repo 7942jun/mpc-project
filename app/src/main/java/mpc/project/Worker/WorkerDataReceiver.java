@@ -211,6 +211,7 @@ public class WorkerDataReceiver {
     }
 
     public void receiveGammaSum(int id, BigInteger gammaSum, long workflowID) {
+        System.out.println("generate Private key: " + "receive gammaSum from " + id);
         emptyCheckGammaSum(workflowID);
         gammaSumArrMap.get(workflowID)[id - 1] = gammaSum;
         gammaSumReadyFlagMap.get(workflowID).release();
@@ -223,7 +224,7 @@ public class WorkerDataReceiver {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        Arrays.setAll(gammaSumArr, i -> gammaArrMap.get(workflowID)[i]);
+        Arrays.setAll(gammaSumArr, i -> gammaSumArrMap.get(workflowID)[i]);
         cleanGammaSumBucket(workflowID);
     }
 

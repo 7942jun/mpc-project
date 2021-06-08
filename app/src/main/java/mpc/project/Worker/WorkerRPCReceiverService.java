@@ -173,7 +173,7 @@ public class WorkerRPCReceiverService extends WorkerServiceGrpc.WorkerServiceImp
     @Override
     public void decrypt(StdRequest request, StreamObserver<StdResponse> responseObserver) {
         String encryptedString = new String(request.getContents().toByteArray());
-        String shadow = RSA.localDecrypt(encryptedString, worker.getKey());
+        String shadow = worker.decrypt(encryptedString);
         responseObserver.onNext(RpcUtility.Response.newStdResponse(id, shadow));
         responseObserver.onCompleted();
     }

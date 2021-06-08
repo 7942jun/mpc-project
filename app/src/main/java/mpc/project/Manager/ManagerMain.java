@@ -147,32 +147,32 @@ public class ManagerMain {
         });
     }
 
-    private long validModulusGeneration(){
+    private long validModulusGeneration() {
         dataReceiver.resetModulusGenerationBucket();
         Instant start = Instant.now();
-        int generationHostBound = parallelGeneration? clusterSize : 1;
-        for(int id = 1; id <= generationHostBound; id++){
+        int generationHostBound = parallelGeneration ? clusterSize : 1;
+        for (int id = 1; id <= generationHostBound; id++) {
             rpcSender.sendHostModulusGenerationRequest(id, keyBitLength, randomPrime, id);
         }
         Pair<BigInteger, Long> modulusWorkflowPair = dataReceiver.waitModulusGeneration();
         BigInteger resultModulus = modulusWorkflowPair.first;
         Long resultWorkflowID = modulusWorkflowPair.second;
         System.out.println(
-                "finished modulus generation, modulus: "+resultModulus+", workflow id: "+resultWorkflowID
+                "finished modulus generation, modulus: " + resultModulus + ", workflow id: " + resultWorkflowID
         );
         Instant end = Instant.now();
         long durationMillis = Duration.between(start, end).toMillis();
         String timeString = DurationFormatUtils.formatDuration(durationMillis, "HH:mm:ss.SSS");
         System.out.println("generation time consumption: " + timeString);
-        for(int id = 1; id <= clusterSize; id++){
+        for (int id = 1; id <= clusterSize; id++) {
             rpcSender.sendAbortModulusGenerationRequest(id);
         }
         return resultWorkflowID;
     }
 
-    private void generatePrivateKey() {
+    private void generatePrivateKey(long workflowID) {
         for (int id = 1; id <= clusterSize; id++) {
-            rpcSender.sendGeneratePrivateKeyRequest(id);
+            rpcSender.sendGeneratePrivateKeyRequest(id, workflowID);
         }
         dataReceiver.waitPrivateKeyGeneration();
     }
@@ -190,16 +190,16 @@ public class ManagerMain {
         formCluster();
         formNetwork();
         long workflowID = validModulusGeneration();
-        //generatePrivateKey();
+        generatePrivateKey(workflowID);
         Scanner scanner = new Scanner(System.in);
-        while(true){
+        while (true) {
             String s = scanner.nextLine().trim();
-            if(s.equals("quit")){
+            if (s.equals("quit")) {
                 break;
             }
-            if(s.equals("regenerate")){
+            if (s.equals("regenerate")) {
                 workflowID = validModulusGeneration();
-                //generatePrivateKey();
+                generatePrivateKey(workflowID);
                 continue;
             }
             String encryptedString = RSA.encrypt(s, key);

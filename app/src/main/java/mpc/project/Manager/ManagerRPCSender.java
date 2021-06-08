@@ -48,8 +48,8 @@ public class ManagerRPCSender {
         });
     }
 
-    public void sendGeneratePrivateKeyRequest(int id) {
-        stubs[id - 1].generatePrivateKey(RpcUtility.Request.newStdRequest(0), new StreamObserver<StdResponse>() {
+    public void sendGeneratePrivateKeyRequest(int id, long workflowID) {
+        stubs[id - 1].generatePrivateKey(RpcUtility.Request.newStdRequest(0, workflowID), new StreamObserver<StdResponse>() {
             @Override
             public void onNext(StdResponse response) {
                 manager.getDataReceiver().receivePrivateKeyGenerationResponse();
