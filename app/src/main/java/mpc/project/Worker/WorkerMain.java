@@ -313,39 +313,48 @@ public class WorkerMain {
                 BigInteger.ZERO.subtract(p).subtract((q));
         System.out.println("phi is " + phi);
 
-        System.out.println("generate Private key: " + "send gamma");
+//        System.out.println("generate Private key: " + "send gamma");
+//
+//        BigInteger[] gammaArrLocal = MathUtility.generateRandomSumArray(phi, clusterSize, rnd);
+////        for (int i = 0; i < gammaArrLocal.length; i++) {
+////            gammaArrLocal[i] = gammaArrLocal[i].mod(key.getE());
+////        }
+//
+//        rpcSender.broadcastGammaArr(gammaArrLocal, workflowID);
+//
+//        System.out.println("generate Private key: " + "gamma array");
+//
+//        BigInteger[] gammaArr = new BigInteger[clusterSize];
+//        dataReceiver.waitGamma(workflowID, gammaArr);
 
-        BigInteger[] gammaArrLocal = MathUtility.generateRandomSumArray(phi, clusterSize, rnd);
-//        for (int i = 0; i < gammaArrLocal.length; i++) {
-//            gammaArrLocal[i] = gammaArrLocal[i].mod(key.getE());
-//        }
-
-        rpcSender.broadcastGammaArr(gammaArrLocal, workflowID);
-
-        System.out.println("generate Private key: " + "gamma array");
-
-        BigInteger[] gammaArr = new BigInteger[clusterSize];
-        dataReceiver.waitGamma(workflowID, gammaArr);
-
-        BigInteger gammaSum = MathUtility.arraySum(gammaArr);
+//        BigInteger gammaSum = MathUtility.arraySum(gammaArr);
+        BigInteger darioRandomizer = BigInteger.valueOf(rnd.nextLong());
+        BigInteger darioGammaPiece = phi.add(key.getE().multiply(darioRandomizer));
 
         System.out.println("generate Private key: " + "gamma sum array");
-        BigInteger[] gammaSumArr = new BigInteger[clusterSize];
-        rpcSender.broadcastGammaSum(gammaSum, workflowID);
-        dataReceiver.waitGammaSum(workflowID, gammaSumArr);
+        BigInteger[] darioGammaPieceArr = new BigInteger[clusterSize];
+        rpcSender.broadcastGammaSum(darioGammaPiece, workflowID);
+        dataReceiver.waitGammaSum(workflowID, darioGammaPieceArr);
 
-        BigInteger phi_N = MathUtility.arraySum(gammaSumArr);
+        BigInteger darioGamma = MathUtility.arraySum(darioGammaPieceArr);
 
-        BigInteger l = phi_N.mod(key.getE());
-        System.out.println("l is " + l);
+        BigInteger a = darioGamma.modInverse(key.getE());
+        BigInteger b = BigInteger.ONE.subtract(a.multiply(darioGamma)).divide(key.getE());
+        System.out.println("verify: " + a.multiply(darioGamma).add(b.multiply(key.getE())));
 
-        BigInteger zeta = l.modInverse(key.getE());
-        System.out.println("zeta is " + zeta);
+//        BigInteger l = phi_N.mod(key.getE());
+//        System.out.println("l is " + l);
+//
+//        BigInteger zeta = l.modInverse(key.getE());
+//        System.out.println("zeta is " + zeta);
 
-        BigInteger d = new BigDecimal(l).negate()
-                .multiply(new BigDecimal(phi))
-                .divide(new BigDecimal(key.getE()), RoundingMode.HALF_UP)
-                .toBigInteger();
+//        BigInteger d = new BigDecimal(l).negate()
+//                .multiply(new BigDecimal(phi))
+//                .divide(new BigDecimal(key.getE()), RoundingMode.HALF_UP)
+//                .toBigInteger();
+        BigInteger d = (id == 1)?
+                a.multiply(darioRandomizer).add(b) :
+                a.multiply(darioRandomizer);
 
         System.out.println("d is " + d);
 
