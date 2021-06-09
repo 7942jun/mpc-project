@@ -268,19 +268,18 @@ public class WorkerMain {
         return g.modPow(p.add(q), modulus);
     }
 
-    private Semaphore waitForKeyLock = new Semaphore(0);
+    private boolean keyReady = false;
     private void waitForKey(){
-        try {
-            waitForKeyLock.acquire();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while(!keyReady){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
-    private void setKeyReady(){
-        waitForKeyLock.release();
-    }
-    private void resetKeyReady(){
-        waitForKeyLock.tryAcquire((waitForKeyLock.availablePermits()));
+    private void setKeyReady(boolean keyStatus){
+        keyReady = keyStatus;
     }
 
     private BigInteger getCoprime(BigInteger m, SecureRandom random) {
@@ -293,7 +292,7 @@ public class WorkerMain {
     }
 
     public void generatePrivateKey(long workflowID) {
-        resetKeyReady();
+        setKeyReady(false);
         // Todo: change server 1 every time to do load balancing
         System.out.println("generate Private key: " + "start");
         Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
@@ -360,7 +359,7 @@ public class WorkerMain {
 
         System.out.println("generate Private key: " + "finished trial generate private key!");
         key.setD(d);
-        setKeyReady();
+        setKeyReady(true);
 
         // Start a trial division
         if (id == 1) {
