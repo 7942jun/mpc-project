@@ -2,6 +2,7 @@ package mpc.project.Manager;
 
 import io.grpc.*;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Time;
 import java.time.Duration;
@@ -21,6 +22,7 @@ import mpc.project.util.Pair;
 import mpc.project.util.RSA;
 import mpc.project.util.RpcUtility;
 import org.apache.commons.lang.time.DurationFormatUtils;
+import org.checkerframework.checker.units.qual.K;
 
 public class ManagerMain {
     final int clusterMaxSize = 48;
@@ -167,6 +169,13 @@ public class ManagerMain {
         for (int id = 1; id <= clusterSize; id++) {
             rpcSender.sendAbortModulusGenerationRequest(id);
         }
+        this.key = new Key();
+        key.setN(resultModulus);
+        try {
+            System.out.println(key.toPKCS1PublicString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         return resultWorkflowID;
     }
 
@@ -180,9 +189,9 @@ public class ManagerMain {
     public String[] decrypt(String s) {
         String[] decryptionShadows = new String[clusterSize];
         for (int id = 1; id <= clusterSize; id++) {
-            rpcSender.sendDecryptionRequest(id, s, decryptionShadows);
+            rpcSender.sendDecryptionRequest(id, s);
         }
-        dataReceiver.waitDecryptionShadow();
+        dataReceiver.waitDecryptionShadow(decryptionShadows);
         return decryptionShadows;
     }
 
