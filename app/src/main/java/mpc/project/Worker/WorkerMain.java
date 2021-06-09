@@ -4,13 +4,10 @@ import io.grpc.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.RoundingMode;
-import java.security.SecureRandom;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 
 import mpc.project.util.*;
 
@@ -226,8 +223,7 @@ public class WorkerMain {
             BigDecimal Ni = new BigDecimal(nPieceArr[i]);
             N = N.add(Ni.multiply(BigDecimal.valueOf(values[i])));
         }
-        BigInteger modulus = N.toBigInteger().mod(randomPrime);
-        return modulus;
+        return N.toBigInteger().mod(randomPrime);
     }
 
     public boolean primalityTestHost(long workflowID) {
@@ -282,18 +278,9 @@ public class WorkerMain {
         keyReady = keyStatus;
     }
 
-    private BigInteger getCoprime(BigInteger m, SecureRandom random) {
-        int length = m.bitLength() - 1;
-        BigInteger e = BigInteger.probablePrime(length, random);
-        while (!(m.gcd(e)).equals(BigInteger.ONE)) {
-            e = BigInteger.probablePrime(length, random);
-        }
-        return e;
-    }
-
     public void generatePrivateKey(long workflowID) {
         setKeyReady(false);
-        // Todo: change server 1 every time to do load balancing
+
         System.out.println("generate Private key: " + "start");
         Pair<BigInteger, BigInteger> pair = pqMap.get(workflowID);
         BigInteger p = pair.first;
@@ -312,28 +299,13 @@ public class WorkerMain {
                 BigInteger.ZERO.subtract(p).subtract((q));
         System.out.println("phi is " + phi);
 
-//        System.out.println("generate Private key: " + "send gamma");
-//
-//        BigInteger[] gammaArrLocal = MathUtility.generateRandomSumArray(phi, clusterSize, rnd);
-////        for (int i = 0; i < gammaArrLocal.length; i++) {
-////            gammaArrLocal[i] = gammaArrLocal[i].mod(key.getE());
-////        }
-//
-//        rpcSender.broadcastGammaArr(gammaArrLocal, workflowID);
-//
-//        System.out.println("generate Private key: " + "gamma array");
-//
-//        BigInteger[] gammaArr = new BigInteger[clusterSize];
-//        dataReceiver.waitGamma(workflowID, gammaArr);
-
-//        BigInteger gammaSum = MathUtility.arraySum(gammaArr);
         BigInteger darioRandomizer = BigInteger.valueOf(rnd.nextLong());
         BigInteger darioGammaPiece = phi.add(key.getE().multiply(darioRandomizer));
 
         System.out.println("generate Private key: " + "gamma sum array");
         BigInteger[] darioGammaPieceArr = new BigInteger[clusterSize];
-        rpcSender.broadcastGammaSum(darioGammaPiece, workflowID);
-        dataReceiver.waitGammaSum(workflowID, darioGammaPieceArr);
+        rpcSender.broadcastDarioGamma(darioGammaPiece, workflowID);
+        dataReceiver.waitDarioGamma(workflowID, darioGammaPieceArr);
 
         BigInteger darioGamma = MathUtility.arraySum(darioGammaPieceArr);
 
@@ -341,16 +313,6 @@ public class WorkerMain {
         BigInteger b = BigInteger.ONE.subtract(a.multiply(darioGamma)).divide(key.getE());
         System.out.println("verify: " + a.multiply(darioGamma).add(b.multiply(key.getE())));
 
-//        BigInteger l = phi_N.mod(key.getE());
-//        System.out.println("l is " + l);
-//
-//        BigInteger zeta = l.modInverse(key.getE());
-//        System.out.println("zeta is " + zeta);
-
-//        BigInteger d = new BigDecimal(l).negate()
-//                .multiply(new BigDecimal(phi))
-//                .divide(new BigDecimal(key.getE()), RoundingMode.HALF_UP)
-//                .toBigInteger();
         BigInteger d = (id == 1)?
                 a.multiply(darioRandomizer).add(b) :
                 a.multiply(darioRandomizer);
@@ -369,9 +331,6 @@ public class WorkerMain {
 
             boolean foundR = false;
             for (int r = 0; r <= clusterSize; r++) {
-                // Fixme: I'm not sure if this is implemented correctly
-                // I'm sure it's not correct now
-
                 key.setD(d.add(BigInteger.valueOf(r)));
                 decryptionResults[0] = RSA.localDecrypt(encryptedTestMessage, key);
                 String tryD = RSA.combineDecryptionResult(decryptionResults, key);
@@ -389,7 +348,6 @@ public class WorkerMain {
                 System.exit(-6);
             }
         }
-//        System.out.println("Jesus, I made it, the private key is correct?!");
     }
 
     public String decrypt(String encryptedMessage){
